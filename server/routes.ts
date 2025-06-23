@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const content = await generateLessonContent(
         subject.name,
         lesson.title,
-        "beginner"
+        "high school"
       );
 
       res.json(content);
