@@ -2,25 +2,32 @@ IMPORTANT: WordPress Plugin Setup Instructions
 
 The AI Tutor is a WordPress PLUGIN, not a separate website.
 
-HOW TO USE:
-1. Install the plugin in your WordPress site
-2. Create a WordPress page 
-3. Add the shortcode [ai_tutor_dashboard] to the page
-4. Visit that PAGE on your WordPress site
+FOR LOCAL WORDPRESS:
+1. Copy ai-tutor-wordpress-plugin folder to: wp-content/plugins/
+2. Activate plugin in WordPress admin
+3. Create WordPress page with shortcode [ai_tutor_dashboard]
+4. Visit that page at your local WordPress URL
+
+EXAMPLE FOR LOCAL SETUP:
+- Your local WordPress: http://localhost/wordpress
+- WordPress admin: http://localhost/wordpress/wp-admin
+- Create page: "Learning Dashboard" 
+- Add shortcode: [ai_tutor_dashboard]
+- Visit: http://localhost/wordpress/learning-dashboard
+
+COMMON LOCAL PATHS:
+- XAMPP: C:\xampp\htdocs\wordpress\wp-content\plugins\
+- WAMP: C:\wamp64\www\wordpress\wp-content\plugins\
+- MAMP: /Applications/MAMP/htdocs/wordpress/wp-content/plugins/
+- Local by Flywheel: [site-folder]/app/public/wp-content/plugins/
 
 WHAT YOU'RE DOING WRONG:
 - Trying to access AI Tutor as a separate website/domain
-- Looking for a standalone URL
+- Looking for a standalone URL like aisite.com
 
 WHAT YOU SHOULD DO:
-- Access it through your WordPress site
-- Use the shortcodes on WordPress pages
-- The AI Tutor appears WITHIN your existing WordPress pages
-
-Example:
-- Your site: example.com
-- Create page: example.com/learning
-- Add shortcode to that page
-- Visit: example.com/learning (AI Tutor appears there)
+- Access through your existing LOCAL WordPress site
+- The AI Tutor appears WITHIN your WordPress pages
+- Use your normal WordPress URL + the page you created
 
 The AI Tutor is embedded content, not a separate site!

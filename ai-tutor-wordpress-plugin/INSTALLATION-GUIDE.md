@@ -1,5 +1,41 @@
 # AI Tutor WordPress Plugin - Installation Guide
 
+## For Locally Hosted WordPress
+
+If you're running WordPress locally (XAMPP, WAMP, Local by Flywheel, etc.), follow these steps:
+
+### Step 1: Access Your Local WordPress
+Your WordPress is probably running at:
+- `http://localhost/wordpress` (XAMPP/WAMP)
+- `http://localhost:8080` (MAMP)
+- `https://yoursite.local` (Local by Flywheel)
+- Or whatever URL you use to access your local WordPress admin
+
+### Step 2: Install the Plugin Locally
+1. Copy the `ai-tutor-wordpress-plugin` folder to your local WordPress plugins directory:
+   - **XAMPP**: `C:\xampp\htdocs\wordpress\wp-content\plugins\`
+   - **WAMP**: `C:\wamp64\www\wordpress\wp-content\plugins\`
+   - **MAMP**: `/Applications/MAMP/htdocs/wordpress/wp-content/plugins/`
+   - **Local**: Your site folder → `app/public/wp-content/plugins/`
+
+2. Go to your local WordPress admin (e.g., `http://localhost/wordpress/wp-admin`)
+3. Navigate to Plugins → Installed Plugins
+4. Find "AI Tutor - Interactive Learning Platform" and click "Activate"
+
+### Step 3: Create Your Learning Page
+1. In WordPress admin: Pages → Add New
+2. Title: "AI Learning Dashboard"
+3. Content: `[ai_tutor_dashboard]`
+4. Click "Publish"
+
+### Step 4: Access Your AI Tutor
+Visit your new page at your local WordPress URL, for example:
+- `http://localhost/wordpress/ai-learning-dashboard`
+- `http://localhost:8080/ai-learning-dashboard`
+- `https://yoursite.local/ai-learning-dashboard`
+
+The AI Tutor will appear embedded in that page using your WordPress theme.
+
 ## Quick Setup Instructions
 
 ### Step 1: Install the Plugin
