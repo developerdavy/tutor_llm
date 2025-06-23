@@ -22,85 +22,92 @@ export interface LessonContent {
   }>;
 }
 
-// Fallback lesson content when OpenAI is unavailable
+// Fallback lesson content when OpenAI is unavailable - High School Level
 const fallbackLessons: Record<string, LessonContent> = {
-  "Introduction to Algebra": {
-    title: "Introduction to Algebra",
-    description: "Learn the fundamentals of algebraic thinking and basic operations",
-    content: "Algebra is the branch of mathematics that uses letters and symbols to represent numbers and quantities in formulas and equations. In algebra, we work with variables (like x or y) that can represent unknown values.\n\nKey concepts:\n• Variables: Letters that represent unknown numbers\n• Expressions: Combinations of variables and numbers (like 3x + 5)\n• Equations: Mathematical statements showing two expressions are equal (like 2x = 10)\n\nAlgebra helps us solve real-world problems by setting up equations and finding the unknown values.",
+  // Mathematics
+  "Algebraic Expressions and Equations": {
+    title: "Algebraic Expressions and Equations",
+    description: "Simplifying expressions, solving linear and quadratic equations",
+    content: "Algebraic expressions combine variables, numbers, and operations. Key skills include:\n\n• Combining like terms: 3x + 5x = 8x\n• Distributive property: 2(x + 3) = 2x + 6\n• Solving linear equations: isolate the variable\n• Quadratic equations: ax² + bx + c = 0\n\nFor quadratics, use factoring, completing the square, or the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a",
     examples: [
       {
-        problem: "Solve for x: 2x + 5 = 15",
-        solution: "2x + 5 = 15\n2x = 15 - 5\n2x = 10\nx = 5",
-        explanation: "We isolate x by subtracting 5 from both sides, then dividing by 2"
+        problem: "Solve: 3(x - 2) + 5 = 2x + 7",
+        solution: "3x - 6 + 5 = 2x + 7\n3x - 1 = 2x + 7\nx = 8",
+        explanation: "Distribute first, combine like terms, then isolate x"
       }
     ],
     quiz: [
       {
-        question: "What is the value of x in the equation 3x = 12?",
-        options: ["3", "4", "9", "15"],
-        correctAnswer: 1,
-        explanation: "To solve 3x = 12, we divide both sides by 3: x = 12 ÷ 3 = 4"
+        question: "What is the solution to x² - 5x + 6 = 0?",
+        options: ["x = 2, 3", "x = 1, 6", "x = -2, -3", "x = 5, 1"],
+        correctAnswer: 0,
+        explanation: "Factor to get (x-2)(x-3) = 0, so x = 2 or x = 3"
       }
     ]
   },
-  "Atomic Structure": {
-    title: "Atomic Structure",
-    description: "Understanding atoms, electrons, and the periodic table",
-    content: "An atom is the smallest unit of matter that retains the properties of an element. Every atom consists of three main particles:\n\n• Protons: Positively charged particles in the nucleus\n• Neutrons: Neutral particles in the nucleus  \n• Electrons: Negatively charged particles orbiting the nucleus\n\nThe number of protons determines what element an atom is. The periodic table organizes elements by their atomic number (number of protons).",
+  
+  // Chemistry
+  "Atomic Theory and Periodic Trends": {
+    title: "Atomic Theory and Periodic Trends",
+    description: "Electron configuration, periodic properties, and atomic structure",
+    content: "Modern atomic theory describes atoms with:\n\n• Nucleus: Contains protons (+) and neutrons (neutral)\n• Electron orbitals: s, p, d, f subshells\n• Electron configuration: 1s² 2s² 2p⁶ 3s² 3p⁶...\n\nPeriodic trends:\n• Atomic radius decreases across a period\n• Ionization energy increases across a period\n• Electronegativity increases across a period",
     examples: [
       {
-        problem: "A carbon atom has 6 protons. How many electrons does it have in its neutral state?",
-        solution: "6 electrons",
-        explanation: "In a neutral atom, the number of electrons equals the number of protons to balance the charges"
+        problem: "Write the electron configuration for chlorine (Cl, atomic number 17)",
+        solution: "1s² 2s² 2p⁶ 3s² 3p⁵",
+        explanation: "Fill orbitals in order: 2 + 2 + 6 + 2 + 5 = 17 electrons"
       }
     ],
     quiz: [
       {
-        question: "What determines an element's identity?",
-        options: ["Number of neutrons", "Number of protons", "Number of electrons", "Atomic mass"],
-        correctAnswer: 1,
-        explanation: "The number of protons (atomic number) determines what element an atom is"
+        question: "Which element has the highest electronegativity?",
+        options: ["Fluorine", "Oxygen", "Nitrogen", "Chlorine"],
+        correctAnswer: 0,
+        explanation: "Fluorine is the most electronegative element on the periodic table"
       }
     ]
   },
-  "Forces and Motion": {
-    title: "Forces and Motion", 
-    description: "Newton's laws and basic mechanics",
-    content: "Forces cause objects to change their motion. Sir Isaac Newton described three fundamental laws:\n\n1. First Law (Inertia): An object at rest stays at rest, and an object in motion stays in motion, unless acted upon by an external force.\n\n2. Second Law: Force equals mass times acceleration (F = ma)\n\n3. Third Law: For every action, there is an equal and opposite reaction.\n\nThese laws help us understand how objects move and interact in our world.",
+  
+  // Physics
+  "Kinematics and Motion": {
+    title: "Kinematics and Motion",
+    description: "Position, velocity, acceleration, and motion graphs",
+    content: "Kinematics describes motion using:\n\n• Position (x): Location relative to origin\n• Velocity (v): Rate of change of position\n• Acceleration (a): Rate of change of velocity\n\nKey equations:\n• v = v₀ + at\n• x = x₀ + v₀t + ½at²\n• v² = v₀² + 2a(x - x₀)\n\nGraphs show relationships between position, velocity, and time.",
     examples: [
       {
-        problem: "If a 2 kg object accelerates at 5 m/s², what force is applied?",
-        solution: "F = ma = 2 kg × 5 m/s² = 10 N",
-        explanation: "Using Newton's second law, we multiply mass by acceleration to find force"
+        problem: "A car accelerates from rest at 2 m/s² for 5 seconds. What's its final velocity?",
+        solution: "v = v₀ + at = 0 + (2)(5) = 10 m/s",
+        explanation: "Use the kinematic equation with initial velocity = 0"
       }
     ],
     quiz: [
       {
-        question: "What is Newton's First Law also known as?",
-        options: ["Law of Acceleration", "Law of Inertia", "Law of Gravity", "Law of Energy"],
+        question: "On a position vs. time graph, what does the slope represent?",
+        options: ["Acceleration", "Velocity", "Displacement", "Force"],
         correctAnswer: 1,
-        explanation: "Newton's First Law is also called the Law of Inertia because it describes an object's tendency to resist changes in motion"
+        explanation: "The slope of a position-time graph represents velocity"
       }
     ]
   },
-  "Poetry Analysis": {
-    title: "Poetry Analysis",
-    description: "Understanding poetic devices and themes",
-    content: "Poetry uses language in unique ways to create meaning and emotion. Key elements include:\n\n• Imagery: Vivid descriptions that appeal to the senses\n• Metaphor: Comparing two unlike things without using 'like' or 'as'\n• Simile: Comparing two unlike things using 'like' or 'as'\n• Rhythm: The beat or flow of the poem\n• Rhyme: Words that sound alike\n\nPoets use these devices to convey deeper meanings and create emotional connections with readers.",
+  
+  // Literature
+  "Literary Analysis and Close Reading": {
+    title: "Literary Analysis and Close Reading",
+    description: "Analyzing themes, symbols, and literary devices in texts",
+    content: "Close reading involves careful analysis of:\n\n• Diction: Author's word choice and its effects\n• Imagery: Sensory details that create vivid pictures\n• Symbolism: Objects or actions representing deeper meanings\n• Theme: Central message or meaning\n• Tone: Author's attitude toward the subject\n\nAnalyze how these elements work together to create meaning and emotional impact.",
     examples: [
       {
-        problem: "Identify the literary device: 'Her voice is music to my ears'",
-        solution: "Metaphor",
-        explanation: "This compares a voice to music without using 'like' or 'as', making it a metaphor"
+        problem: "In 'The Great Gatsby,' what does the green light symbolize?",
+        solution: "Hope, dreams, and the American Dream",
+        explanation: "The green light represents Gatsby's hopes and the broader theme of pursuing the American Dream"
       }
     ],
     quiz: [
       {
-        question: "What literary device compares two things using 'like' or 'as'?",
-        options: ["Metaphor", "Simile", "Imagery", "Alliteration"],
+        question: "What is the difference between theme and plot?",
+        options: ["Theme is what happens, plot is the message", "Plot is what happens, theme is the message", "They are the same thing", "Theme is only in poetry"],
         correctAnswer: 1,
-        explanation: "A simile makes comparisons using the words 'like' or 'as'"
+        explanation: "Plot is the sequence of events; theme is the underlying message or meaning"
       }
     ]
   }

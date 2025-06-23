@@ -56,27 +56,35 @@ export class DatabaseStorage implements IStorage {
 
       const insertedSubjects = await db.insert(subjects).values(defaultSubjects).returning();
 
-      // Initialize lessons for all subjects
+      // Initialize comprehensive high school lessons for all subjects
       const allLessons = [
-        // Mathematics lessons
-        { subjectId: insertedSubjects[0].id, title: "Introduction to Algebra", description: "Basic algebraic concepts and operations", content: "", order: 1 },
-        { subjectId: insertedSubjects[0].id, title: "Linear Equations", description: "Solving linear equations step by step", content: "", order: 2 },
-        { subjectId: insertedSubjects[0].id, title: "Quadratic Equations", description: "Understanding and solving quadratic equations", content: "", order: 3 },
+        // Mathematics lessons - High School Level
+        { subjectId: insertedSubjects[0].id, title: "Algebraic Expressions and Equations", description: "Simplifying expressions, solving linear and quadratic equations", content: "", order: 1 },
+        { subjectId: insertedSubjects[0].id, title: "Functions and Graphing", description: "Understanding functions, domain, range, and graphing techniques", content: "", order: 2 },
+        { subjectId: insertedSubjects[0].id, title: "Polynomials and Factoring", description: "Operations with polynomials and factoring techniques", content: "", order: 3 },
+        { subjectId: insertedSubjects[0].id, title: "Exponential and Logarithmic Functions", description: "Properties and applications of exponential and log functions", content: "", order: 4 },
+        { subjectId: insertedSubjects[0].id, title: "Trigonometry Basics", description: "Trigonometric ratios, unit circle, and basic identities", content: "", order: 5 },
         
-        // Chemistry lessons
-        { subjectId: insertedSubjects[1].id, title: "Atomic Structure", description: "Understanding atoms, electrons, and periodic table", content: "", order: 1 },
-        { subjectId: insertedSubjects[1].id, title: "Chemical Bonding", description: "Ionic and covalent bonds explained", content: "", order: 2 },
-        { subjectId: insertedSubjects[1].id, title: "Chemical Reactions", description: "Types of reactions and balancing equations", content: "", order: 3 },
+        // Chemistry lessons - High School Level
+        { subjectId: insertedSubjects[1].id, title: "Atomic Theory and Periodic Trends", description: "Electron configuration, periodic properties, and atomic structure", content: "", order: 1 },
+        { subjectId: insertedSubjects[1].id, title: "Chemical Bonding and Molecular Geometry", description: "Ionic, covalent, and metallic bonds, VSEPR theory", content: "", order: 2 },
+        { subjectId: insertedSubjects[1].id, title: "Stoichiometry and Chemical Equations", description: "Balancing equations, molar calculations, limiting reagents", content: "", order: 3 },
+        { subjectId: insertedSubjects[1].id, title: "Acids, Bases, and pH", description: "Acid-base theories, pH calculations, and titrations", content: "", order: 4 },
+        { subjectId: insertedSubjects[1].id, title: "Thermochemistry and Reaction Rates", description: "Energy changes in reactions and factors affecting reaction rates", content: "", order: 5 },
         
-        // Physics lessons
-        { subjectId: insertedSubjects[2].id, title: "Forces and Motion", description: "Newton's laws and basic mechanics", content: "", order: 1 },
-        { subjectId: insertedSubjects[2].id, title: "Energy and Work", description: "Kinetic and potential energy concepts", content: "", order: 2 },
-        { subjectId: insertedSubjects[2].id, title: "Waves and Sound", description: "Wave properties and sound phenomena", content: "", order: 3 },
+        // Physics lessons - High School Level
+        { subjectId: insertedSubjects[2].id, title: "Kinematics and Motion", description: "Position, velocity, acceleration, and motion graphs", content: "", order: 1 },
+        { subjectId: insertedSubjects[2].id, title: "Forces and Newton's Laws", description: "Force analysis, free body diagrams, and applications", content: "", order: 2 },
+        { subjectId: insertedSubjects[2].id, title: "Energy and Momentum", description: "Kinetic and potential energy, conservation laws", content: "", order: 3 },
+        { subjectId: insertedSubjects[2].id, title: "Waves and Electromagnetic Radiation", description: "Wave properties, sound waves, and electromagnetic spectrum", content: "", order: 4 },
+        { subjectId: insertedSubjects[2].id, title: "Electricity and Magnetism", description: "Electric circuits, Ohm's law, and magnetic fields", content: "", order: 5 },
         
-        // Literature lessons
-        { subjectId: insertedSubjects[3].id, title: "Poetry Analysis", description: "Understanding poetic devices and themes", content: "", order: 1 },
-        { subjectId: insertedSubjects[3].id, title: "Character Development", description: "Analyzing characters in literature", content: "", order: 2 },
-        { subjectId: insertedSubjects[3].id, title: "Literary Themes", description: "Identifying and analyzing major themes", content: "", order: 3 },
+        // Literature lessons - High School Level
+        { subjectId: insertedSubjects[3].id, title: "Literary Analysis and Close Reading", description: "Analyzing themes, symbols, and literary devices in texts", content: "", order: 1 },
+        { subjectId: insertedSubjects[3].id, title: "Poetry: Form, Structure, and Meaning", description: "Understanding poetic forms, meter, rhyme, and interpretation", content: "", order: 2 },
+        { subjectId: insertedSubjects[3].id, title: "Drama and Character Development", description: "Analyzing plays, character motivation, and dramatic techniques", content: "", order: 3 },
+        { subjectId: insertedSubjects[3].id, title: "Narrative Fiction and Point of View", description: "Understanding narrative techniques, perspective, and storytelling", content: "", order: 4 },
+        { subjectId: insertedSubjects[3].id, title: "Research and Academic Writing", description: "MLA format, thesis development, and evidence-based arguments", content: "", order: 5 },
       ];
 
       await db.insert(lessons).values(allLessons);
