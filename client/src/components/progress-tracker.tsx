@@ -3,12 +3,13 @@ import { Trophy, Calendar, Clock } from "lucide-react";
 import type { UserProgress } from "@shared/schema";
 
 interface ProgressTrackerProps {
-  userProgress?: UserProgress[];
+  userProgress?: any;
 }
 
 export default function ProgressTracker({ userProgress }: ProgressTrackerProps) {
-  const completedLessons = userProgress?.filter(p => p.completed).length || 0;
-  const totalLessons = userProgress?.length || 0;
+  const progressArray = Array.isArray(userProgress) ? userProgress : [];
+  const completedLessons = progressArray.filter((p: any) => p.completed).length || 0;
+  const totalLessons = progressArray.length || 0;
   const studyStreak = 7; // TODO: Calculate actual streak
   const totalHours = 18.5; // TODO: Calculate actual hours
 

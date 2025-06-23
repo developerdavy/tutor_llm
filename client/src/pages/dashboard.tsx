@@ -139,7 +139,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <ProgressTracker userProgress={userProgress} />
+            <ProgressTracker userProgress={userProgress as any} />
           </div>
 
           {/* Main Content Area - Avatar and Lesson */}
