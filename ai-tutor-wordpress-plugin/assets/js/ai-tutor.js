@@ -1,111 +1,252 @@
-// AI Tutor WordPress Plugin JavaScript
+// AI Tutor WordPress Plugin - React Style JavaScript
 
-(function($) {
-    'use strict';
+// Subject and lesson data
+const SUBJECTS_DATA = [
+    {
+        id: 1,
+        name: "Mathematics",
+        description: "Algebra, Geometry, Calculus",
+        icon: "📊",
+        color: "#1E88E5",
+        lessons: [
+            {
+                id: 1,
+                title: "Algebraic Expressions and Equations",
+                description: "Learn to simplify expressions and solve linear and quadratic equations with step-by-step guidance.",
+                difficulty: "beginner",
+                estimatedDuration: 45,
+                order: 1
+            },
+            {
+                id: 2,
+                title: "Functions and Graphing",
+                description: "Understand functions, their domains, ranges, and graphing techniques for various function types.",
+                difficulty: "intermediate",
+                estimatedDuration: 50,
+                order: 2
+            },
+            {
+                id: 3,
+                title: "Trigonometry Basics",
+                description: "Explore trigonometric ratios, the unit circle, and fundamental trigonometric identities.",
+                difficulty: "intermediate",
+                estimatedDuration: 55,
+                order: 3
+            }
+        ]
+    },
+    {
+        id: 2,
+        name: "Chemistry",
+        description: "Organic, Inorganic, Physical",
+        icon: "🧪",
+        color: "#FF7043",
+        lessons: [
+            {
+                id: 4,
+                title: "Atomic Theory and Periodic Trends",
+                description: "Understand atomic structure, electron configuration, and how properties change across the periodic table.",
+                difficulty: "beginner",
+                estimatedDuration: 40,
+                order: 1
+            },
+            {
+                id: 5,
+                title: "Chemical Bonding and Molecular Geometry",
+                description: "Learn about ionic, covalent, and metallic bonds, plus molecular shapes using VSEPR theory.",
+                difficulty: "intermediate",
+                estimatedDuration: 45,
+                order: 2
+            }
+        ]
+    },
+    {
+        id: 3,
+        name: "Physics",
+        description: "Mechanics, Thermodynamics",
+        icon: "⚛️",
+        color: "#43A047",
+        lessons: [
+            {
+                id: 6,
+                title: "Kinematics and Motion",
+                description: "Master concepts of position, velocity, acceleration, and motion graphs for one and two dimensions.",
+                difficulty: "beginner",
+                estimatedDuration: 50,
+                order: 1
+            },
+            {
+                id: 7,
+                title: "Forces and Newton's Laws",
+                description: "Apply Newton's three laws of motion to analyze forces, create free body diagrams, and solve problems.",
+                difficulty: "intermediate",
+                estimatedDuration: 55,
+                order: 2
+            }
+        ]
+    },
+    {
+        id: 4,
+        name: "Literature",
+        description: "Poetry, Prose, Drama",
+        icon: "📚",
+        color: "#9C27B0",
+        lessons: [
+            {
+                id: 8,
+                title: "Literary Analysis and Close Reading",
+                description: "Develop skills in analyzing themes, symbols, and literary devices across different types of texts.",
+                difficulty: "beginner",
+                estimatedDuration: 45,
+                order: 1
+            },
+            {
+                id: 9,
+                title: "Poetry: Form, Structure, and Meaning",
+                description: "Explore poetic forms, meter, rhyme schemes, and techniques for interpreting poetry's deeper meanings.",
+                difficulty: "intermediate",
+                estimatedDuration: 40,
+                order: 2
+            }
+        ]
+    }
+];
 
-    window.AiTutor = {
-        config: {
+class AiTutorReact {
+    constructor(options = {}) {
+        this.config = {
             subjectId: '',
             userId: 0,
-            isVoiceEnabled: true
-        },
+            apiUrl: '',
+            nonce: '',
+            isVoiceEnabled: localStorage.getItem('ai_tutor_voice_enabled') !== 'false',
+            ...options
+        };
         
-        selectedSubject: null,
-        selectedLesson: null,
+        this.selectedSubject = null;
+        this.selectedLesson = null;
+        this.userProgress = this.loadUserProgress();
         
-        init: function(options) {
-            this.config = Object.assign(this.config, options);
-            this.bindEvents();
-            this.loadSubjects();
-            this.loadUserProgress();
-            
-            // Auto-select subject if provided
-            if (this.config.subjectId) {
-                setTimeout(() => {
-                    this.selectSubject(this.config.subjectId);
-                }, 500);
-            }
-        },
+        this.init();
+    }
+    
+    init() {
+        this.bindEvents();
+        this.loadSubjects();
+        this.updateVoiceToggle();
+        this.updateAvatarMessage("Welcome to AI Tutor! Select a subject to begin your learning journey.");
         
-        bindEvents: function() {
-            // Voice toggle
-            $(document).on('click', '#voice-toggle', this.toggleVoice.bind(this));
-            
-            // Subject selection
-            $(document).on('click', '.subject-item', this.handleSubjectClick.bind(this));
-            
-            // Lesson selection
-            $(document).on('click', '.lesson-item', this.handleLessonClick.bind(this));
-            
-            // Chat
-            $(document).on('click', '#send-chat', this.sendChatMessage.bind(this));
-            $(document).on('keypress', '#chat-input', function(e) {
-                if (e.which === 13) {
+        // Auto-select subject if provided
+        if (this.config.subjectId) {
+            setTimeout(() => {
+                this.selectSubject(parseInt(this.config.subjectId));
+            }, 500);
+        }
+    }
+        
+    
+    bindEvents() {
+        // Voice toggle
+        const voiceToggle = document.getElementById('voice-toggle');
+        if (voiceToggle) {
+            voiceToggle.addEventListener('click', () => this.toggleVoice());
+        }
+        
+        // Chat functionality
+        const sendBtn = document.getElementById('send-chat');
+        const chatInput = document.getElementById('chat-input');
+        
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => this.sendChatMessage());
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
                     this.sendChatMessage();
                 }
-            }.bind(this));
-            
-            // Progress updates
-            $(document).on('click', '.mark-complete-btn', this.markLessonComplete.bind(this));
-        },
-        
-        loadSubjects: function() {
-            this.showLoading('#subjects-list');
-            
-            fetch('/wp-json/ai-tutor/v1/subjects')
-                .then(response => response.json())
-                .then(data => {
-                    this.renderSubjects(data);
-                })
-                .catch(error => {
-                    console.error('Error loading subjects:', error);
-                    this.showError('#subjects-list', 'Failed to load subjects');
-                });
-        },
-        
-        renderSubjects: function(subjects) {
-            const container = $('#subjects-list');
-            let html = '';
-            
-            subjects.forEach(subject => {
-                html += `
-                    <div class="subject-item" data-subject-id="${subject.id}">
-                        <div class="subject-item-icon" style="background-color: ${subject.color}">
-                            ${subject.icon}
-                        </div>
-                        <div>
-                            <strong>${subject.name}</strong>
-                            <br><small>${subject.description}</small>
-                        </div>
-                    </div>
-                `;
             });
-            
-            container.html(html);
-        },
+        }
         
-        handleSubjectClick: function(e) {
-            const subjectId = $(e.currentTarget).data('subject-id');
-            this.selectSubject(subjectId);
-        },
+        // Delegate event handlers for dynamic content
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('subject-item') || e.target.closest('.subject-item')) {
+                const subjectItem = e.target.closest('.subject-item') || e.target;
+                const subjectId = parseInt(subjectItem.dataset.subjectId);
+                if (subjectId) this.handleSubjectClick(subjectId);
+            }
+            
+            if (e.target.classList.contains('lesson-item') || e.target.closest('.lesson-item')) {
+                const lessonItem = e.target.closest('.lesson-item') || e.target;
+                const lessonId = parseInt(lessonItem.dataset.lessonId);
+                if (lessonId) this.handleLessonClick(lessonId);
+            }
+        });
+    }
         
-        selectSubject: function(subjectId) {
-            // Update UI
-            $('.subject-item').removeClass('selected');
-            $(`.subject-item[data-subject-id="${subjectId}"]`).addClass('selected');
-            
-            // Load lessons
-            this.loadLessons(subjectId);
-            
-            // Update avatar message
-            const subjectName = $(`.subject-item[data-subject-id="${subjectId}"] strong`).text();
-            this.updateAvatarMessage(`Great choice! Let's explore ${subjectName} together.`);
-            
-            // Show lessons container
-            $('#lessons-container').show();
-            
-            this.selectedSubject = subjectId;
-        },
+    
+    loadSubjects() {
+        const container = document.getElementById('subjects-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        SUBJECTS_DATA.forEach(subject => {
+            const subjectElement = this.createSubjectElement(subject);
+            container.appendChild(subjectElement);
+        });
+        
+        this.updateProgressTracker();
+    }
+        
+    
+    createSubjectElement(subject) {
+        const div = document.createElement('div');
+        div.className = 'subject-item animate-fade-in';
+        div.dataset.subjectId = subject.id;
+        
+        const progress = this.getSubjectProgress(subject.id);
+        
+        div.innerHTML = `
+            <div class="subject-icon" style="background-color: ${subject.color}">
+                ${subject.icon}
+            </div>
+            <div class="subject-info">
+                <h4>${subject.name}</h4>
+                <div class="subject-meta">${subject.lessons.length} lessons • ${progress}% complete</div>
+            </div>
+        `;
+        
+        return div;
+    }
+        
+    
+    handleSubjectClick(subjectId) {
+        const subject = SUBJECTS_DATA.find(s => s.id === subjectId);
+        if (subject) this.selectSubject(subject);
+    }
+    
+    selectSubject(subject) {
+        // Update selected state
+        document.querySelectorAll('.subject-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        const selectedItem = document.querySelector(`[data-subject-id="${subject.id}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+        
+        this.selectedSubject = subject;
+        this.loadLessons(subject);
+        this.updateAvatarMessage(`Excellent choice! ${subject.name} has so many fascinating concepts to explore. Let's pick a lesson to get started.`);
+        
+        // Show lessons container
+        const lessonsContainer = document.getElementById('lessons-container');
+        if (lessonsContainer) {
+            lessonsContainer.classList.remove('hidden');
+        }
+    }
         
         loadLessons: function(subjectId) {
             this.showLoading('#lessons-list');

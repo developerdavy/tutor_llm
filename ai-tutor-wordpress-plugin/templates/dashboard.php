@@ -1,88 +1,117 @@
 <?php
-// Dashboard template
+// React-style Dashboard template
 $current_user = wp_get_current_user();
 $subject_id = isset($atts['subject_id']) ? intval($atts['subject_id']) : '';
 ?>
 
-<div id="ai-tutor-dashboard" class="ai-tutor-container">
-    <div class="ai-tutor-header">
-        <h1>AI Tutor Dashboard</h1>
-        <p>Welcome back, <?php echo esc_html($current_user->display_name); ?>!</p>
-        <button id="voice-toggle" class="ai-tutor-btn ai-tutor-btn-outline">
-            🔊 Voice On
-        </button>
-    </div>
-
-    <div class="ai-tutor-grid">
-        <!-- Sidebar -->
-        <div class="ai-tutor-sidebar">
-            <!-- Subjects -->
-            <div class="ai-tutor-card">
-                <h3>Select a Subject</h3>
-                <div id="subjects-list" class="ai-tutor-subjects">
-                    <!-- Subjects will be loaded via JavaScript -->
-                </div>
+<!-- AI Tutor React-style Interface -->
+<div id="ai-tutor-app" class="ai-tutor-react-container">
+    <!-- Navigation Bar -->
+    <nav class="ai-tutor-nav">
+        <div class="nav-content">
+            <div class="nav-brand">
+                <h1 class="brand-title">AI Tutor</h1>
             </div>
-
-            <!-- Progress Tracker -->
-            <div class="ai-tutor-card">
-                <h3>Your Progress</h3>
-                <div id="progress-tracker">
-                    <!-- Progress will be loaded via JavaScript -->
+            <div class="nav-actions">
+                <button id="voice-toggle" class="voice-btn voice-on">
+                    🔊 Voice On
+                </button>
+                <div class="user-info">
+                    Welcome, <span class="user-name"><?php echo esc_html($current_user->display_name); ?></span>!
                 </div>
             </div>
         </div>
+    </nav>
 
-        <!-- Main Content -->
-        <div class="ai-tutor-main">
-            <!-- AI Avatar -->
-            <div class="ai-tutor-card">
-                <div class="ai-tutor-avatar-container">
-                    <h3>AI Tutor</h3>
-                    <div id="ai-avatar" class="ai-tutor-avatar">
-                        <div class="avatar-circle">🤖</div>
-                        <div class="speech-bubble">
-                            <p id="avatar-message">Select a subject to begin learning!</p>
-                        </div>
+    <!-- Main Content Grid -->
+    <div class="main-container">
+        <div class="content-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Subjects Card -->
+                <div class="react-card">
+                    <h3 class="card-title">Subjects</h3>
+                    <div id="subjects-list" class="subjects-container">
+                        <!-- Subjects will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Progress Card -->
+                <div class="react-card">
+                    <h3 class="card-title">Your Progress</h3>
+                    <div id="progress-tracker" class="progress-container">
+                        <!-- Progress will be loaded here -->
                     </div>
                 </div>
             </div>
 
-            <!-- Lessons List -->
-            <div id="lessons-container" class="ai-tutor-card" style="display: none;">
-                <h3 id="lessons-title">Lessons</h3>
-                <div id="lessons-list">
-                    <!-- Lessons will be loaded via JavaScript -->
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- AI Avatar Card -->
+                <div class="react-card">
+                    <div class="avatar-section">
+                        <h3 class="card-title">AI Tutor</h3>
+                        <div id="ai-avatar" class="avatar-container">
+                            <div class="avatar-circle">
+                                🤖
+                            </div>
+                            <div class="speech-bubble">
+                                <div class="bubble-arrow"></div>
+                                <p id="avatar-message">Select a subject to begin learning!</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Lesson Interface -->
-            <div id="lesson-interface" class="ai-tutor-card" style="display: none;">
-                <div id="lesson-content">
-                    <!-- Lesson content will be loaded here -->
+                <!-- Lessons Container -->
+                <div id="lessons-container" class="react-card hidden">
+                    <h3 id="lessons-title" class="card-title">Lessons</h3>
+                    <div id="lessons-list" class="lessons-grid">
+                        <!-- Lessons will be loaded here -->
+                    </div>
                 </div>
-            </div>
 
-            <!-- Chat Interface -->
-            <div id="chat-interface" class="ai-tutor-card" style="display: none;">
-                <h3>Chat with AI Tutor</h3>
-                <div id="chat-messages" class="ai-tutor-chat-messages">
-                    <!-- Chat messages will appear here -->
+                <!-- Lesson Interface -->
+                <div id="lesson-interface" class="react-card hidden">
+                    <div id="lesson-content" class="lesson-content">
+                        <!-- Lesson content will be loaded here -->
+                    </div>
                 </div>
-                <div class="ai-tutor-chat-input">
-                    <input type="text" id="chat-input" placeholder="Ask a question about the lesson...">
-                    <button id="send-chat" class="ai-tutor-btn">Send</button>
+
+                <!-- Chat Interface -->
+                <div id="chat-interface" class="react-card hidden">
+                    <h3 class="card-title">Chat with AI Tutor</h3>
+                    <div id="chat-messages" class="chat-messages">
+                        <!-- Chat messages will appear here -->
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Ask a question about the lesson..." class="chat-input">
+                        <button id="send-chat" class="send-btn">Send</button>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="loading-modal hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    AiTutor.init({
-        subjectId: '<?php echo esc_js($subject_id); ?>',
-        userId: <?php echo get_current_user_id(); ?>
-    });
+    // Initialize with React-style functionality
+    if (typeof AiTutorReact !== 'undefined') {
+        window.aiTutorApp = new AiTutorReact({
+            subjectId: '<?php echo esc_js($subject_id); ?>',
+            userId: <?php echo get_current_user_id(); ?>,
+            apiUrl: '<?php echo rest_url('ai-tutor/v1/'); ?>',
+            nonce: '<?php echo wp_create_nonce('wp_rest'); ?>'
+        });
+    }
 });
 </script>
