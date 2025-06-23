@@ -31,6 +31,8 @@ export default function Dashboard() {
     queryKey: ["/api/subjects", selectedSubject?.id, "lessons"],
     enabled: !!selectedSubject,
     staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: userProgress, isLoading: progressLoading } = useQuery({
@@ -52,13 +54,19 @@ export default function Dashboard() {
   }, [location, subjects, selectedSubject]);
 
   const handleSubjectSelect = (subject: Subject) => {
-    queryClient.invalidateQueries({
-      queryKey: ["/api/subjects", subject.id, "lessons"],
-      refetchType: "all" 
+    // Clear existing lesson selection first
+    setSelectedLesson(null);
+    
+    // Force remove all lesson queries from cache
+    queryClient.removeQueries({
+      predicate: (query) => {
+        return Array.isArray(query.queryKey) && 
+               query.queryKey[0] === "/api/subjects" && 
+               query.queryKey[2] === "lessons";
+      }
     });
     
     setSelectedSubject(subject);
-    setSelectedLesson(null);
   };
 
   const handleLessonSelect = (lesson: Lesson) => {
@@ -174,10 +182,10 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-600">{lesson.description}</p>
                             <div className="mt-2 flex items-center justify-between">
                               <Badge variant="outline" className="text-xs">
-                                {lesson.difficulty}
+                                Lesson {lesson.order}
                               </Badge>
                               <span className="text-xs text-gray-500">
-                                ~{lesson.estimatedDuration} min
+                                Subject: {selectedSubject?.name}
                               </span>
                             </div>
                           </div>
