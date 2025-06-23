@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle } from "lucide-react";
+import { useLocation } from "wouter";
 import Layout from "@/components/layout";
 import AvatarDisplay from "@/components/avatar-display";
 import SubjectCard from "@/components/subject-card";
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
@@ -35,6 +37,19 @@ export default function Dashboard() {
     queryKey: ["/api/users", user?.id, "progress"],
     enabled: !!user?.id,
   });
+
+  // Handle URL parameters for subject selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    const subjectId = urlParams.get('subject');
+    
+    if (subjectId && subjects && !selectedSubject) {
+      const subject = subjects.find(s => s.id === parseInt(subjectId));
+      if (subject) {
+        handleSubjectSelect(subject);
+      }
+    }
+  }, [location, subjects, selectedSubject]);
 
   const handleSubjectSelect = (subject: Subject) => {
     queryClient.invalidateQueries({

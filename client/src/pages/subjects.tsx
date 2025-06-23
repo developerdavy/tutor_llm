@@ -6,11 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Clock, Trophy, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
 import Layout from "@/components/layout";
 import type { Subject, UserProgress } from "@shared/schema";
 
 export default function Subjects() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   const { data: subjects } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
@@ -117,7 +119,11 @@ export default function Subjects() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4" variant={progress > 0 ? "default" : "outline"}>
+                    <Button 
+                      className="w-full mt-4" 
+                      variant={progress > 0 ? "default" : "outline"}
+                      onClick={() => setLocation(`/dashboard?subject=${subject.id}`)}
+                    >
                       <BookOpen className="h-4 w-4 mr-2" />
                       {progress > 0 ? "Continue Learning" : "Start Learning"}
                     </Button>
