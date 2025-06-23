@@ -5,7 +5,11 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  fullName: text("full_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const subjects = pgTable("subjects", {
@@ -46,6 +50,20 @@ export const chatMessages = pgTable("chat_messages", {
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const registerSchema = insertUserSchema.extend({
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const insertSubjectSchema = createInsertSchema(subjects).omit({

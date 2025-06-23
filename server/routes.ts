@@ -2,9 +2,116 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateLessonContent, generateTutorResponse } from "./services/gemini";
+import { hashPassword, comparePassword, generateToken, authenticateToken, optionalAuth, type AuthRequest } from "./auth";
+import { registerSchema, loginSchema } from "@shared/schema";
 import { insertChatMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(validatedData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Check if email already exists
+      const existingEmail = await storage.getUserByEmail(validatedData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(validatedData.password);
+      
+      // Create user
+      const user = await storage.createUser({
+        username: validatedData.username,
+        email: validatedData.email,
+        password: hashedPassword,
+        fullName: validatedData.fullName,
+      });
+
+      // Generate token
+      const token = generateToken(user.id);
+
+      res.status(201).json({
+        message: "User registered successfully",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+        },
+        token,
+      });
+    } catch (error: any) {
+      if (error.name === "ZodError") {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      
+      // Find user by username
+      const user = await storage.getUserByUsername(validatedData.username);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // Check password
+      const isValidPassword = await comparePassword(validatedData.password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // Generate token
+      const token = generateToken(user.id);
+
+      res.json({
+        message: "Login successful",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+        },
+        token,
+      });
+    } catch (error: any) {
+      if (error.name === "ZodError") {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.get("/api/auth/me", authenticateToken, async (req: AuthRequest, res) => {
+    res.json({
+      user: {
+        id: req.user!.id,
+        username: req.user!.username,
+        email: req.user!.email,
+        fullName: req.user!.fullName,
+      },
+    });
+  });
+
   // Get all subjects
   app.get("/api/subjects", async (req, res) => {
     try {
@@ -70,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user progress
-  app.get("/api/users/:userId/progress", async (req, res) => {
+  app.get("/api/users/:userId/progress", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const progress = await storage.getUserProgress(userId);

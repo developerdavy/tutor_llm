@@ -4,18 +4,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, GraduationCap, Bell } from "lucide-react";
+import { AlertCircle, GraduationCap, Bell, LogOut, User } from "lucide-react";
 import AvatarDisplay from "@/components/avatar-display";
 import SubjectCard from "@/components/subject-card";
 import LessonInterface from "@/components/lesson-interface";
 import ChatInterface from "@/components/chat-interface";
 import ProgressTracker from "@/components/progress-tracker";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Subject, Lesson } from "@shared/schema";
 
 export default function Dashboard() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery<Subject[]>({
@@ -36,7 +38,8 @@ export default function Dashboard() {
   });
 
   const { data: userProgress } = useQuery({
-    queryKey: ["/api/users/1/progress"], // Using default user ID
+    queryKey: ["/api/users", user?.id, "progress"],
+    enabled: !!user?.id,
   });
 
   const handleSubjectSelect = (subject: Subject) => {
@@ -88,8 +91,24 @@ export default function Dashboard() {
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
               </Button>
-              <div className="w-8 h-8 bg-edu-blue rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-sm">JS</span>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-edu-blue rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                    {user?.fullName || user?.username}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={logout}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
               </div>
             </div>
           </div>
