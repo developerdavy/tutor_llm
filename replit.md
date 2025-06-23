@@ -99,6 +99,7 @@ Located in `shared/schema.ts`, defines five main entities:
 - January 23, 2025. Project migration completed - Database connected, all dependencies installed
 - January 23, 2025. Expanded curriculum - Added 40 comprehensive high school lessons across all subjects
 - January 23, 2025. Fixed UI issues - Resolved nested anchor tag warnings in authentication pages
+- January 23, 2025. Enhanced navigation - Fixed "Start Learning" button to properly navigate with subject pre-selection
 
 ## User Preferences
 
