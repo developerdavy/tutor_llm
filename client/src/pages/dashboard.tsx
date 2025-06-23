@@ -28,11 +28,13 @@ export default function Dashboard() {
   });
 
   const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
-    queryKey: ["/api/subjects", selectedSubject?.id, "lessons"],
+    queryKey: [`/api/subjects/${selectedSubject?.id}/lessons`, selectedSubject?.id],
     enabled: !!selectedSubject,
+    gcTime: 0,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
+    networkMode: "always",
   });
 
   const { data: userProgress, isLoading: progressLoading } = useQuery({
@@ -51,22 +53,19 @@ export default function Dashboard() {
         handleSubjectSelect(subject);
       }
     }
-  }, [location, subjects, selectedSubject]);
+  }, [location, subjects]);
 
   const handleSubjectSelect = (subject: Subject) => {
-    // Clear existing lesson selection first
     setSelectedLesson(null);
+    setSelectedSubject(null); // Clear first to force re-render
     
-    // Force remove all lesson queries from cache
-    queryClient.removeQueries({
-      predicate: (query) => {
-        return Array.isArray(query.queryKey) && 
-               query.queryKey[0] === "/api/subjects" && 
-               query.queryKey[2] === "lessons";
-      }
-    });
+    // Clear all queries completely
+    queryClient.clear();
     
-    setSelectedSubject(subject);
+    // Set the new subject after a brief delay to ensure cache is cleared
+    setTimeout(() => {
+      setSelectedSubject(subject);
+    }, 100);
   };
 
   const handleLessonSelect = (lesson: Lesson) => {
@@ -165,9 +164,11 @@ export default function Dashboard() {
                     {lessonsLoading ? (
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-edu-blue"></div>
+                        <p className="ml-2 text-sm text-gray-600">Loading {selectedSubject?.name} lessons...</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        <p className="text-sm text-gray-500 mb-3">Showing {lessons?.length || 0} lessons for {selectedSubject?.name}</p>
                         {lessons?.map((lesson) => (
                           <div
                             key={lesson.id}
