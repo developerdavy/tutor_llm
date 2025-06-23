@@ -43,17 +43,17 @@ export default function LessonInterface({ lesson, subject, isVoiceEnabled }: Les
   const { data: lessonContent, isLoading } = useQuery<LessonContent>({
     queryKey: ["/api/lessons", lesson.id, "content"],
     queryFn: async () => {
-      if (lesson.content) {
+      if (lesson.content && lesson.content.trim() !== '') {
         try {
           return JSON.parse(lesson.content);
         } catch {
-          // If content is not JSON, generate new content
+          // If content is not valid JSON, generate new content
         }
       }
       
-      // Generate new content
+      // Generate new content since lesson.content is empty or invalid
       const response = await apiRequest("POST", `/api/lessons/${lesson.id}/generate`);
-      return await response.json();
+      return response;
     },
   });
 
