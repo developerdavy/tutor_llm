@@ -46,8 +46,8 @@ export default function Layout({ children }: LayoutProps) {
                 const Icon = item.icon;
                 return (
                   <Link key={item.name} href={item.href}>
-                    <a 
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    <span 
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         isActive(item.href)
                           ? "text-edu-blue bg-blue-50"
                           : "text-dark-text hover:text-edu-blue hover:bg-gray-50"
@@ -55,7 +55,7 @@ export default function Layout({ children }: LayoutProps) {
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.name}</span>
-                    </a>
+                    </span>
                   </Link>
                 );
               })}
@@ -97,15 +97,15 @@ export default function Layout({ children }: LayoutProps) {
               const Icon = item.icon;
               return (
                 <Link key={item.name} href={item.href}>
-                  <a 
-                    className={`flex items-center justify-center p-2 rounded-md text-xs font-medium transition-colors ${
+                  <span 
+                    className={`flex items-center justify-center p-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       isActive(item.href)
                         ? "text-edu-blue bg-blue-50"
                         : "text-dark-text hover:text-edu-blue hover:bg-gray-50"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                  </a>
+                  </span>
                 </Link>
               );
             })}

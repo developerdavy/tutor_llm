@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, GraduationCap, Bell, LogOut, User } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import Layout from "@/components/layout";
 import AvatarDisplay from "@/components/avatar-display";
 import SubjectCard from "@/components/subject-card";
 import LessonInterface from "@/components/lesson-interface";
@@ -17,7 +18,7 @@ export default function Dashboard() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery<Subject[]>({
@@ -28,24 +29,16 @@ export default function Dashboard() {
     queryKey: ["/api/subjects", selectedSubject?.id, "lessons"],
     enabled: !!selectedSubject,
     staleTime: 0,
-    gcTime: 0,
-    queryFn: async () => {
-      if (!selectedSubject) return [];
-      const response = await fetch(`/api/subjects/${selectedSubject.id}/lessons`);
-      if (!response.ok) throw new Error('Failed to fetch lessons');
-      return response.json();
-    },
   });
 
-  const { data: userProgress } = useQuery({
+  const { data: userProgress, isLoading: progressLoading } = useQuery({
     queryKey: ["/api/users", user?.id, "progress"],
     enabled: !!user?.id,
   });
 
   const handleSubjectSelect = (subject: Subject) => {
-    // Clear all lesson-related queries when switching subjects
-    queryClient.invalidateQueries({ 
-      queryKey: ["/api/subjects"],
+    queryClient.invalidateQueries({
+      queryKey: ["/api/subjects", subject.id, "lessons"],
       refetchType: "all" 
     });
     
@@ -59,194 +52,161 @@ export default function Dashboard() {
 
   if (subjectsLoading) {
     return (
-      <div className="min-h-screen bg-light-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-edu-blue"></div>
-      </div>
+      <Layout>
+        <div className="p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-edu-blue"></div>
+          </div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-light-bg">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-edu-blue rounded-lg flex items-center justify-center">
-                  <GraduationCap className="text-white text-xl" />
-                </div>
-                <h1 className="text-2xl font-bold text-edu-blue">AI Tutor</h1>
-              </div>
+    <Layout>
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {user?.fullName || user?.username}!</p>
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-dark-text hover:text-edu-blue transition-colors font-medium">Dashboard</a>
-              <a href="#" className="text-dark-text hover:text-edu-blue transition-colors font-medium">Subjects</a>
-              <a href="#" className="text-dark-text hover:text-edu-blue transition-colors font-medium">Progress</a>
-              <a href="#" className="text-dark-text hover:text-edu-blue transition-colors font-medium">History</a>
-            </nav>
-
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-edu-blue rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                    {user?.fullName || user?.username}
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={logout}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Sidebar - Subject Selection */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4 text-dark-text">Choose Your Subject</h2>
-                
-                <div className="space-y-3">
-                  {subjects?.map((subject) => (
-                    <SubjectCard
-                      key={subject.id}
-                      subject={subject}
-                      isSelected={selectedSubject?.id === subject.id}
-                      onSelect={() => handleSubjectSelect(subject)}
-                      progress={75} // TODO: Get from userProgress
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <ProgressTracker userProgress={userProgress as any} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+              className={isVoiceEnabled ? "bg-green-50 border-green-200" : ""}
+            >
+              {isVoiceEnabled ? "🔊 Voice On" : "🔇 Voice Off"}
+            </Button>
           </div>
 
-          {/* Main Content Area - Avatar and Lesson */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* AI Avatar Section */}
-            <Card className="overflow-hidden">
-              <div className="bg-gradient-to-r from-avatar-frame to-blue-50 p-8">
-                <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
-                  
-                  <AvatarDisplay 
-                    isVoiceEnabled={isVoiceEnabled}
-                    currentMessage="Great question! Let me explain quadratic equations step by step..."
-                  />
-
-                  {/* Tutor Introduction */}
-                  <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-2xl md:text-3xl font-bold text-dark-text mb-2">
-                      Meet Alex, Your AI Tutor
-                    </h2>
-                    <p className="text-gray-600 text-lg mb-4">
-                      I'm here to help you master {selectedSubject?.name || "various subjects"} with personalized lessons and interactive explanations.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                      <Button 
-                        className="bg-edu-blue hover:bg-blue-600 text-white"
-                        disabled={!selectedSubject}
-                      >
-                        <span>Start Learning</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="border-edu-blue text-edu-blue hover:bg-edu-blue hover:text-white"
-                        onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
-                      >
-                        <span>Voice {isVoiceEnabled ? "On" : "Off"}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Lessons List */}
-            {selectedSubject && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Subjects */}
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-dark-text">
-                    {selectedSubject.name} Lessons
-                  </h3>
+                  <h3 className="text-lg font-semibold mb-4 text-dark-text">Select a Subject</h3>
+                  <div className="space-y-3">
+                    {subjects?.map((subject) => (
+                      <SubjectCard
+                        key={subject.id}
+                        subject={subject}
+                        isSelected={selectedSubject?.id === subject.id}
+                        onSelect={() => handleSubjectSelect(subject)}
+                        progress={0}
+                      />
+                    ))}
+                  </div>
                   
-                  {lessonsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-edu-blue"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {lessons?.map((lesson, index) => (
-                        <div
-                          key={lesson.id}
-                          className={`lesson-card p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                            selectedLesson?.id === lesson.id
-                              ? "border-edu-blue bg-blue-50"
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
-                          onClick={() => handleLessonSelect(lesson)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-dark-text">{lesson.title}</h4>
-                              <p className="text-sm text-gray-600">{lesson.description}</p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-500">Lesson {index + 1}</span>
-                              <Badge variant="secondary">
-                                {index === 0 ? "Available" : "Locked"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                  {!subjects?.length && (
+                    <div className="text-center py-8">
+                      <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">No subjects available</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
-            )}
 
-            {/* Current Lesson Content */}
-            {selectedLesson && (
-              <LessonInterface 
-                lesson={selectedLesson}
-                subject={selectedSubject}
-                isVoiceEnabled={isVoiceEnabled}
-              />
-            )}
+              <ProgressTracker userProgress={userProgress as any} />
+            </div>
 
-            {/* Q&A Section */}
-            {selectedLesson && (
-              <ChatInterface 
-                lessonId={selectedLesson.id}
-                userId={1} // TODO: Get from auth context
-                isVoiceEnabled={isVoiceEnabled}
-              />
-            )}
+            {/* Main Content Area - Avatar and Lesson */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* AI Avatar */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-dark-text">AI Tutor</h3>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {isVoiceEnabled ? "Voice Enabled" : "Voice Disabled"}
+                    </Badge>
+                  </div>
+                  
+                  <AvatarDisplay 
+                    isVoiceEnabled={isVoiceEnabled}
+                    currentMessage={selectedLesson ? "Ready to help with your lesson!" : "Select a subject to begin learning"}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Lessons List */}
+              {selectedSubject && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-4 text-dark-text">
+                      {selectedSubject.name} Lessons
+                    </h3>
+                    
+                    {lessonsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-edu-blue"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {lessons?.map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                              selectedLesson?.id === lesson.id
+                                ? "border-edu-blue bg-blue-50"
+                                : "border-gray-200 hover:border-gray-300"
+                            }`}
+                            onClick={() => handleLessonSelect(lesson)}
+                          >
+                            <h4 className="font-medium text-dark-text">{lesson.title}</h4>
+                            <p className="text-sm text-gray-600">{lesson.description}</p>
+                            <div className="mt-2 flex items-center justify-between">
+                              <Badge variant="outline" className="text-xs">
+                                {lesson.difficulty}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                ~{lesson.estimatedDuration} min
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {!lessons?.length && !lessonsLoading && (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">No lessons available for this subject</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Lesson Interface */}
+              {selectedLesson && selectedSubject && (
+                <>
+                  <Separator />
+                  <LessonInterface 
+                    lesson={selectedLesson} 
+                    subject={selectedSubject}
+                    isVoiceEnabled={isVoiceEnabled}
+                  />
+                </>
+              )}
+
+              {/* Chat Interface */}
+              {selectedLesson && user && (
+                <>
+                  <Separator />
+                  <ChatInterface 
+                    lessonId={selectedLesson.id}
+                    userId={user.id}
+                    isVoiceEnabled={isVoiceEnabled}
+                  />
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }
