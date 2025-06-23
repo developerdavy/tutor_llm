@@ -4,6 +4,8 @@ import {
   type InsertUser, type InsertSubject, type InsertLesson, 
   type InsertUserProgress, type InsertChatMessage 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -31,178 +33,154 @@ export interface IStorage {
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private subjects: Map<number, Subject>;
-  private lessons: Map<number, Lesson>;
-  private userProgress: Map<string, UserProgress>;
-  private chatMessages: Map<number, ChatMessage>;
-  private currentUserId: number;
-  private currentSubjectId: number;
-  private currentLessonId: number;
-  private currentProgressId: number;
-  private currentMessageId: number;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.subjects = new Map();
-    this.lessons = new Map();
-    this.userProgress = new Map();
-    this.chatMessages = new Map();
-    this.currentUserId = 1;
-    this.currentSubjectId = 1;
-    this.currentLessonId = 1;
-    this.currentProgressId = 1;
-    this.currentMessageId = 1;
-
     this.initializeDefaultData();
   }
 
-  private initializeDefaultData() {
-    // Initialize default subjects
-    const defaultSubjects = [
-      { name: "Mathematics", description: "Algebra, Geometry, Calculus", icon: "calculator", color: "#1E88E5" },
-      { name: "Chemistry", description: "Organic, Inorganic, Physical", icon: "flask", color: "#FF7043" },
-      { name: "Physics", description: "Mechanics, Thermodynamics", icon: "atom", color: "#43A047" },
-      { name: "Literature", description: "Poetry, Prose, Drama", icon: "book", color: "#9C27B0" },
-    ];
+  private async initializeDefaultData() {
+    try {
+      // Check if subjects already exist
+      const existingSubjects = await db.select().from(subjects);
+      if (existingSubjects.length > 0) {
+        return; // Data already initialized
+      }
 
-    defaultSubjects.forEach(subject => {
-      const id = this.currentSubjectId++;
-      this.subjects.set(id, { ...subject, id });
-    });
+      // Initialize default subjects
+      const defaultSubjects = [
+        { name: "Mathematics", description: "Algebra, Geometry, Calculus", icon: "calculator", color: "#1E88E5" },
+        { name: "Chemistry", description: "Organic, Inorganic, Physical", icon: "flask", color: "#FF7043" },
+        { name: "Physics", description: "Mechanics, Thermodynamics", icon: "atom", color: "#43A047" },
+        { name: "Literature", description: "Poetry, Prose, Drama", icon: "book", color: "#9C27B0" },
+      ];
 
-    // Initialize lessons for all subjects
-    const allLessons = [
-      // Mathematics lessons
-      { subjectId: 1, title: "Introduction to Algebra", description: "Basic algebraic concepts and operations", content: "", order: 1 },
-      { subjectId: 1, title: "Linear Equations", description: "Solving linear equations step by step", content: "", order: 2 },
-      { subjectId: 1, title: "Quadratic Equations", description: "Understanding and solving quadratic equations", content: "", order: 3 },
-      
-      // Chemistry lessons
-      { subjectId: 2, title: "Atomic Structure", description: "Understanding atoms, electrons, and periodic table", content: "", order: 1 },
-      { subjectId: 2, title: "Chemical Bonding", description: "Ionic and covalent bonds explained", content: "", order: 2 },
-      { subjectId: 2, title: "Chemical Reactions", description: "Types of reactions and balancing equations", content: "", order: 3 },
-      
-      // Physics lessons
-      { subjectId: 3, title: "Forces and Motion", description: "Newton's laws and basic mechanics", content: "", order: 1 },
-      { subjectId: 3, title: "Energy and Work", description: "Kinetic and potential energy concepts", content: "", order: 2 },
-      { subjectId: 3, title: "Waves and Sound", description: "Wave properties and sound phenomena", content: "", order: 3 },
-      
-      // Literature lessons
-      { subjectId: 4, title: "Poetry Analysis", description: "Understanding poetic devices and themes", content: "", order: 1 },
-      { subjectId: 4, title: "Character Development", description: "Analyzing characters in literature", content: "", order: 2 },
-      { subjectId: 4, title: "Literary Themes", description: "Identifying and analyzing major themes", content: "", order: 3 },
-    ];
+      const insertedSubjects = await db.insert(subjects).values(defaultSubjects).returning();
 
-    allLessons.forEach(lesson => {
-      const id = this.currentLessonId++;
-      this.lessons.set(id, { ...lesson, id });
-    });
+      // Initialize lessons for all subjects
+      const allLessons = [
+        // Mathematics lessons
+        { subjectId: insertedSubjects[0].id, title: "Introduction to Algebra", description: "Basic algebraic concepts and operations", content: "", order: 1 },
+        { subjectId: insertedSubjects[0].id, title: "Linear Equations", description: "Solving linear equations step by step", content: "", order: 2 },
+        { subjectId: insertedSubjects[0].id, title: "Quadratic Equations", description: "Understanding and solving quadratic equations", content: "", order: 3 },
+        
+        // Chemistry lessons
+        { subjectId: insertedSubjects[1].id, title: "Atomic Structure", description: "Understanding atoms, electrons, and periodic table", content: "", order: 1 },
+        { subjectId: insertedSubjects[1].id, title: "Chemical Bonding", description: "Ionic and covalent bonds explained", content: "", order: 2 },
+        { subjectId: insertedSubjects[1].id, title: "Chemical Reactions", description: "Types of reactions and balancing equations", content: "", order: 3 },
+        
+        // Physics lessons
+        { subjectId: insertedSubjects[2].id, title: "Forces and Motion", description: "Newton's laws and basic mechanics", content: "", order: 1 },
+        { subjectId: insertedSubjects[2].id, title: "Energy and Work", description: "Kinetic and potential energy concepts", content: "", order: 2 },
+        { subjectId: insertedSubjects[2].id, title: "Waves and Sound", description: "Wave properties and sound phenomena", content: "", order: 3 },
+        
+        // Literature lessons
+        { subjectId: insertedSubjects[3].id, title: "Poetry Analysis", description: "Understanding poetic devices and themes", content: "", order: 1 },
+        { subjectId: insertedSubjects[3].id, title: "Character Development", description: "Analyzing characters in literature", content: "", order: 2 },
+        { subjectId: insertedSubjects[3].id, title: "Literary Themes", description: "Identifying and analyzing major themes", content: "", order: 3 },
+      ];
+
+      await db.insert(lessons).values(allLessons);
+    } catch (error) {
+      console.error("Failed to initialize default data:", error);
+    }
   }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Subjects
   async getAllSubjects(): Promise<Subject[]> {
-    return Array.from(this.subjects.values());
+    return await db.select().from(subjects);
   }
 
   async getSubject(id: number): Promise<Subject | undefined> {
-    return this.subjects.get(id);
+    const [subject] = await db.select().from(subjects).where(eq(subjects.id, id));
+    return subject || undefined;
   }
 
   async createSubject(insertSubject: InsertSubject): Promise<Subject> {
-    const id = this.currentSubjectId++;
-    const subject: Subject = { ...insertSubject, id };
-    this.subjects.set(id, subject);
+    const [subject] = await db.insert(subjects).values(insertSubject).returning();
     return subject;
   }
 
   // Lessons
   async getLessonsBySubject(subjectId: number): Promise<Lesson[]> {
-    return Array.from(this.lessons.values())
-      .filter(lesson => lesson.subjectId === subjectId)
-      .sort((a, b) => a.order - b.order);
+    return await db.select().from(lessons)
+      .where(eq(lessons.subjectId, subjectId));
   }
 
   async getLesson(id: number): Promise<Lesson | undefined> {
-    return this.lessons.get(id);
+    const [lesson] = await db.select().from(lessons).where(eq(lessons.id, id));
+    return lesson || undefined;
   }
 
   async createLesson(insertLesson: InsertLesson): Promise<Lesson> {
-    const id = this.currentLessonId++;
-    const lesson: Lesson = { ...insertLesson, id };
-    this.lessons.set(id, lesson);
+    const [lesson] = await db.insert(lessons).values(insertLesson).returning();
     return lesson;
   }
 
   // User Progress
   async getUserProgress(userId: number): Promise<UserProgress[]> {
-    return Array.from(this.userProgress.values())
-      .filter(progress => progress.userId === userId);
+    return await db.select().from(userProgress).where(eq(userProgress.userId, userId));
   }
 
   async getUserProgressBySubject(userId: number, subjectId: number): Promise<UserProgress | undefined> {
-    return Array.from(this.userProgress.values())
-      .find(progress => progress.userId === userId && progress.subjectId === subjectId);
+    const [progress] = await db.select().from(userProgress)
+      .where(and(eq(userProgress.userId, userId), eq(userProgress.subjectId, subjectId)));
+    return progress || undefined;
   }
 
   async updateUserProgress(insertProgress: InsertUserProgress): Promise<UserProgress> {
-    const key = `${insertProgress.userId}-${insertProgress.subjectId}`;
-    const existing = this.userProgress.get(key);
+    const existing = await this.getUserProgressBySubject(insertProgress.userId, insertProgress.subjectId);
     
     if (existing) {
-      const updated = { ...existing, ...insertProgress, lastAccessed: new Date() };
-      this.userProgress.set(key, updated);
+      const [updated] = await db.update(userProgress)
+        .set({ ...insertProgress, lastAccessed: new Date() })
+        .where(eq(userProgress.id, existing.id))
+        .returning();
       return updated;
     } else {
-      const id = this.currentProgressId++;
-      const progress: UserProgress = { 
-        id, 
-        userId: insertProgress.userId,
-        subjectId: insertProgress.subjectId,
-        lessonId: insertProgress.lessonId ?? null,
-        progress: insertProgress.progress ?? 0,
-        completed: insertProgress.completed ?? false,
-        lastAccessed: new Date() 
-      };
-      this.userProgress.set(key, progress);
-      return progress;
+      const [created] = await db.insert(userProgress)
+        .values({
+          ...insertProgress,
+          progress: insertProgress.progress ?? 0,
+          completed: insertProgress.completed ?? false,
+          lessonId: insertProgress.lessonId ?? null,
+          lastAccessed: new Date()
+        })
+        .returning();
+      return created;
     }
   }
 
   // Chat Messages
   async getChatMessages(userId: number, lessonId: number): Promise<ChatMessage[]> {
-    return Array.from(this.chatMessages.values())
-      .filter(message => message.userId === userId && message.lessonId === lessonId)
-      .sort((a, b) => a.timestamp!.getTime() - b.timestamp!.getTime());
+    return await db.select().from(chatMessages)
+      .where(and(eq(chatMessages.userId, userId), eq(chatMessages.lessonId, lessonId)));
   }
 
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
-    const id = this.currentMessageId++;
-    const message: ChatMessage = { 
-      ...insertMessage, 
-      id, 
-      timestamp: new Date() 
-    };
-    this.chatMessages.set(id, message);
+    const [message] = await db.insert(chatMessages)
+      .values({
+        ...insertMessage,
+        timestamp: new Date()
+      })
+      .returning();
     return message;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

@@ -60,12 +60,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "beginner"
       );
 
-      // Update lesson with generated content
-      const updatedLesson = await storage.createLesson({
-        ...lesson,
-        content: JSON.stringify(content)
-      });
-
       res.json(content);
     } catch (error) {
       res.status(500).json({ 
