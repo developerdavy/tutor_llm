@@ -167,8 +167,8 @@ export default function Register() {
           </form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/login">
-              <a className="text-blue-600 hover:underline">Sign in</a>
+            <Link href="/login" className="text-blue-600 hover:underline">
+              Sign in
             </Link>
           </div>
         </CardContent>

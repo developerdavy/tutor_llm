@@ -96,8 +96,8 @@ export default function Login() {
           </form>
           <div className="mt-4 text-center text-sm">
             Don't have an account?{" "}
-            <Link href="/register">
-              <a className="text-blue-600 hover:underline">Sign up</a>
+            <Link href="/register" className="text-blue-600 hover:underline">
+              Sign up
             </Link>
           </div>
         </CardContent>
