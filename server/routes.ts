@@ -123,15 +123,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isFromUser: true
       });
 
-      // Get lesson context
+      // Get lesson context and chat history
       const lesson = await storage.getLesson(lessonId);
       const subject = lesson ? await storage.getSubject(lesson.subjectId) : null;
+      const chatHistory = await storage.getChatMessages(userId, lessonId);
       
       const context = lesson ? `${lesson.title}: ${lesson.description}` : "";
       const subjectName = subject?.name || "General";
 
-      // Generate AI response
-      const aiResponse = await generateTutorResponse(message, context, subjectName);
+      // Generate AI response with chat history context
+      const aiResponse = await generateTutorResponse(message, subjectName, context, undefined, chatHistory);
 
       // Save AI response
       const aiMessage = await storage.createChatMessage({

@@ -140,7 +140,8 @@ export async function generateTutorResponse(
   question: string,
   subject: string,
   lessonTopic?: string,
-  context?: string
+  context?: string,
+  chatHistory: any[] = []
 ): Promise<string> {
   try {
     const systemPrompt = `You are an expert AI tutor specializing in ${subject}. You provide clear, encouraging, and educational responses to student questions.
@@ -167,28 +168,150 @@ Guidelines:
       ],
     });
 
-    return response.text || generateFallbackResponse(question, subject);
+    return response.text || generateFallbackResponse(question, subject, chatHistory);
   } catch (error) {
     console.error("Gemini Tutor Response Error:", error);
-    return generateFallbackResponse(question, subject);
+    return generateFallbackResponse(question, subject, chatHistory);
   }
 }
 
-function generateFallbackResponse(question: string, subject: string): string {
+function generateFallbackResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const questionLower = question.toLowerCase();
+  
+  // Detect question types and provide contextual responses
+  if (questionLower.includes('how') || questionLower.includes('explain')) {
+    return generateExplanationResponse(question, subject);
+  } else if (questionLower.includes('why') || questionLower.includes('what if')) {
+    return generateReasoningResponse(question, subject);
+  } else if (questionLower.includes('solve') || questionLower.includes('calculate')) {
+    return generateProblemSolvingResponse(question, subject);
+  } else if (questionLower.includes('example') || questionLower.includes('show me')) {
+    return generateExampleResponse(question, subject);
+  } else if (questionLower.includes('help') || questionLower.includes('stuck')) {
+    return generateHelpResponse(question, subject);
+  } else {
+    return generateGeneralResponse(question, subject);
+  }
+}
+
+function generateExplanationResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  // Check if this is a follow-up question
+  const isFollowUp = chatHistory.length > 0;
+  const lastMessages = chatHistory.slice(-4).map(msg => `${msg.isFromUser ? 'Student' : 'Tutor'}: ${msg.message}`).join('\n');
+  
+  const contextAware = isFollowUp ? 'I see you have more questions about this topic. ' : '';
+  const historyContext = isFollowUp ? `\n\nBased on our conversation:\n${lastMessages}\n\n` : '';
+  
   const responses = [
-    `Great question about ${subject}! Let me help you understand this concept step by step.`,
-    `I love helping with ${subject} problems! This is a fundamental concept that will help you in many areas.`,
-    `${subject} can be tricky, but with practice it becomes much clearer. Let's work through this together!`,
-    `That's an excellent ${subject} question! Understanding this will really strengthen your foundation.`
+    `Let me break down this ${subject} concept for you step by step.`,
+    `This is a great ${subject} question that builds on fundamental principles.`,
+    `Understanding this ${subject} concept will really help with more advanced topics.`
   ];
   
-  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+  const intro = responses[Math.floor(Math.random() * responses.length)];
   
-  return `${randomResponse}
+  return `${contextAware}${intro}
 
-Regarding your question: "${question}"
+Your question: "${question}"${historyContext}
 
-While I work on getting you a detailed answer, I encourage you to review the lesson content and examples provided. Feel free to ask more specific questions about any part you'd like me to clarify!`;
+To explain this properly, I'd need to understand:
+1. What specific part is confusing you?
+2. Have you worked through the examples in the lesson?
+3. Is there a particular step where you get stuck?
+
+Try reviewing the lesson examples first, then let me know what specific aspect needs clarification!`;
+}
+
+function generateReasoningResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const isFollowUp = chatHistory.length > 0;
+  const contextAware = isFollowUp ? 'Building on our discussion, ' : '';
+  
+  return `${contextAware}Excellent analytical thinking! Questions about "why" show you're really understanding ${subject}.
+
+Your question: "${question}"
+
+The reasoning behind ${subject} concepts often connects to:
+- Fundamental principles and laws
+- Real-world applications  
+- Mathematical relationships
+- Historical development of the theory
+
+What specific aspect of the reasoning would you like me to focus on? The more specific your question, the better I can help!`;
+}
+
+function generateProblemSolvingResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const isFollowUp = chatHistory.length > 0;
+  const contextAware = isFollowUp ? 'Let me continue helping with this problem. ' : '';
+  
+  return `${contextAware}I can definitely help you work through this ${subject} problem!
+
+Your question: "${question}"
+
+For problem-solving in ${subject}, try this approach:
+1. Identify what you're given and what you need to find
+2. Choose the appropriate formula or method
+3. Work through step-by-step
+4. Check if your answer makes sense
+
+Would you like to share the specific numbers or details of the problem? I can guide you through each step!`;
+}
+
+function generateExampleResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const isFollowUp = chatHistory.length > 0;
+  const contextAware = isFollowUp ? 'I can provide another example to help clarify. ' : '';
+  
+  return `${contextAware}Examples are a great way to understand ${subject} concepts!
+
+Your question: "${question}"
+
+I'd love to provide a specific example. To give you the most helpful one:
+- What level are you working at? (basic, intermediate, advanced)
+- Are there particular numbers or scenarios you'd prefer?
+- Is this for homework, test prep, or general understanding?
+
+Check the lesson examples first - they're designed to build your understanding progressively!`;
+}
+
+function generateHelpResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const isFollowUp = chatHistory.length > 0;
+  const contextAware = isFollowUp ? 'I notice you need more help with this. ' : '';
+  
+  return `${contextAware}I'm here to help you succeed with ${subject}! Getting stuck is part of learning.
+
+Your question: "${question}"
+
+Let's troubleshoot together:
+- Have you tried working through the lesson examples?
+- Which specific step or concept is causing trouble?
+- Are there any error messages or incorrect results?
+
+Remember: making mistakes is how we learn! Let me know exactly where you're stuck and I'll guide you through it.`;
+}
+
+function generateGeneralResponse(question: string, subject: string, chatHistory: any[] = []): string {
+  const isFollowUp = chatHistory.length > 0;
+  const contextResponses = isFollowUp ? [
+    `I see you have another question about ${subject}!`,
+    `Let me help you explore this ${subject} concept further.`,
+    `Continuing our ${subject} discussion, that's a great question.`
+  ] : [
+    `That's a thoughtful ${subject} question!`,
+    `I can see you're really thinking about ${subject} concepts.`,
+    `Great question - this shows you're engaging deeply with ${subject}.`
+  ];
+  
+  const intro = contextResponses[Math.floor(Math.random() * contextResponses.length)];
+  
+  return `${intro}
+
+Your question: "${question}"
+
+To give you the most helpful response, could you:
+- Be more specific about what you'd like to know?
+- Let me know your current understanding level?
+- Share any work you've already tried?
+
+I'm here to help you master these ${subject} concepts!`;
 }
 
 export async function evaluateAnswer(
