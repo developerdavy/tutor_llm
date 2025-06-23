@@ -104,3 +104,12 @@ Located in `shared/schema.ts`, defines five main entities:
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## WordPress Integration Options
+
+The user has expressed interest in implementing this AI tutoring platform in WordPress. Key integration approaches documented for future reference:
+
+1. **Plugin Development**: Convert the React frontend into a WordPress plugin with custom post types for subjects/lessons
+2. **Headless WordPress**: Use WordPress as content management backend with React frontend
+3. **Embedded Integration**: Iframe embedding of the Replit-hosted application into WordPress pages
+4. **REST API Bridge**: Create WordPress endpoints that communicate with the existing Node.js backend
