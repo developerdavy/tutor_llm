@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const queryClient = useQueryClient();
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
@@ -24,6 +25,14 @@ export default function Dashboard() {
   const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
     queryKey: ["/api/subjects", selectedSubject?.id, "lessons"],
     enabled: !!selectedSubject,
+    staleTime: 0,
+    gcTime: 0,
+    queryFn: async () => {
+      if (!selectedSubject) return [];
+      const response = await fetch(`/api/subjects/${selectedSubject.id}/lessons`);
+      if (!response.ok) throw new Error('Failed to fetch lessons');
+      return response.json();
+    },
   });
 
   const { data: userProgress } = useQuery({
@@ -31,6 +40,12 @@ export default function Dashboard() {
   });
 
   const handleSubjectSelect = (subject: Subject) => {
+    // Clear all lesson-related queries when switching subjects
+    queryClient.invalidateQueries({ 
+      queryKey: ["/api/subjects"],
+      refetchType: "all" 
+    });
+    
     setSelectedSubject(subject);
     setSelectedLesson(null);
   };
