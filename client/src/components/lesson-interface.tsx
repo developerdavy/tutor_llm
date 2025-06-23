@@ -53,7 +53,7 @@ export default function LessonInterface({ lesson, subject, isVoiceEnabled }: Les
       
       // Generate new content since lesson.content is empty or invalid
       const response = await apiRequest("POST", `/api/lessons/${lesson.id}/generate`);
-      return response;
+      return await response.json();
     },
   });
 
