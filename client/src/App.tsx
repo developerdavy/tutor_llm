@@ -33,6 +33,7 @@ function Router() {
       {isAuthenticated ? (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/subjects" component={Subjects} />
           <Route path="/progress" component={Progress} />
           <Route path="/history" component={History} />

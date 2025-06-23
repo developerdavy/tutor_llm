@@ -122,7 +122,7 @@ export default function Subjects() {
                     <Button 
                       className="w-full mt-4" 
                       variant={progress > 0 ? "default" : "outline"}
-                      onClick={() => setLocation(`/dashboard?subject=${subject.id}`)}
+                      onClick={() => setLocation(`/?subject=${subject.id}`)}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
                       {progress > 0 ? "Continue Learning" : "Start Learning"}
