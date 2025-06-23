@@ -46,9 +46,10 @@ Located in `shared/schema.ts`, defines five main entities:
 6. **Voice Synthesis**: Text-to-speech for AI responses
 
 ### AI Integration
-- **OpenAI GPT-4o**: Powers lesson content generation and tutoring responses
-- **Content Generation**: Creates structured lessons with examples and quizzes
-- **Conversational AI**: Provides contextual help and explanations
+- **Google Gemini AI**: Powers lesson content generation and tutoring responses
+- **Content Generation**: Creates structured lessons with examples and quizzes using Gemini 1.5 Flash
+- **Conversational AI**: Provides contextual help and explanations using Gemini 2.5 Pro
+- **Fallback System**: Static educational content when API quotas are exceeded
 
 ## Data Flow
 
