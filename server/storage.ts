@@ -72,14 +72,30 @@ export class MemStorage implements IStorage {
       this.subjects.set(id, { ...subject, id });
     });
 
-    // Initialize default lessons for Mathematics
-    const mathLessons = [
+    // Initialize lessons for all subjects
+    const allLessons = [
+      // Mathematics lessons
       { subjectId: 1, title: "Introduction to Algebra", description: "Basic algebraic concepts and operations", content: "", order: 1 },
       { subjectId: 1, title: "Linear Equations", description: "Solving linear equations step by step", content: "", order: 2 },
       { subjectId: 1, title: "Quadratic Equations", description: "Understanding and solving quadratic equations", content: "", order: 3 },
+      
+      // Chemistry lessons
+      { subjectId: 2, title: "Atomic Structure", description: "Understanding atoms, electrons, and periodic table", content: "", order: 1 },
+      { subjectId: 2, title: "Chemical Bonding", description: "Ionic and covalent bonds explained", content: "", order: 2 },
+      { subjectId: 2, title: "Chemical Reactions", description: "Types of reactions and balancing equations", content: "", order: 3 },
+      
+      // Physics lessons
+      { subjectId: 3, title: "Forces and Motion", description: "Newton's laws and basic mechanics", content: "", order: 1 },
+      { subjectId: 3, title: "Energy and Work", description: "Kinetic and potential energy concepts", content: "", order: 2 },
+      { subjectId: 3, title: "Waves and Sound", description: "Wave properties and sound phenomena", content: "", order: 3 },
+      
+      // Literature lessons
+      { subjectId: 4, title: "Poetry Analysis", description: "Understanding poetic devices and themes", content: "", order: 1 },
+      { subjectId: 4, title: "Character Development", description: "Analyzing characters in literature", content: "", order: 2 },
+      { subjectId: 4, title: "Literary Themes", description: "Identifying and analyzing major themes", content: "", order: 3 },
     ];
 
-    mathLessons.forEach(lesson => {
+    allLessons.forEach(lesson => {
       const id = this.currentLessonId++;
       this.lessons.set(id, { ...lesson, id });
     });
@@ -157,8 +173,12 @@ export class MemStorage implements IStorage {
     } else {
       const id = this.currentProgressId++;
       const progress: UserProgress = { 
-        ...insertProgress, 
         id, 
+        userId: insertProgress.userId,
+        subjectId: insertProgress.subjectId,
+        lessonId: insertProgress.lessonId ?? null,
+        progress: insertProgress.progress ?? 0,
+        completed: insertProgress.completed ?? false,
         lastAccessed: new Date() 
       };
       this.userProgress.set(key, progress);
