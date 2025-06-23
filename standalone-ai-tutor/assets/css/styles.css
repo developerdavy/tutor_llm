@@ -1,0 +1,213 @@
+/* AI Tutor Standalone Styles */
+
+.font-inter {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-pulse-slow {
+    animation: pulse 2s infinite;
+}
+
+/* Subject cards */
+.subject-card {
+    @apply p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300;
+}
+
+.subject-card.selected {
+    @apply border-blue-500 bg-blue-50;
+}
+
+.subject-card:hover {
+    transform: translateY(-1px);
+}
+
+/* Lesson cards */
+.lesson-card {
+    @apply p-4 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300;
+}
+
+.lesson-card.selected {
+    @apply border-blue-500 bg-blue-50;
+}
+
+.lesson-card:hover {
+    transform: translateY(-1px);
+}
+
+/* Chat messages */
+.chat-message {
+    @apply p-3 rounded-lg max-w-xs;
+}
+
+.chat-message.user {
+    @apply bg-blue-600 text-white ml-auto;
+    border-radius: 18px 18px 4px 18px;
+}
+
+.chat-message.ai {
+    @apply bg-white border border-gray-200 text-gray-900;
+    border-radius: 18px 18px 18px 4px;
+}
+
+/* Progress bars */
+.progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+    @apply bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500;
+}
+
+/* Difficulty badges */
+.difficulty-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.difficulty-badge.beginner {
+    @apply bg-green-100 text-green-800;
+}
+
+.difficulty-badge.intermediate {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.difficulty-badge.advanced {
+    @apply bg-red-100 text-red-800;
+}
+
+/* Loading states */
+.skeleton {
+    @apply bg-gray-200 rounded animate-pulse;
+}
+
+.skeleton-text {
+    @apply h-4 bg-gray-200 rounded animate-pulse;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Avatar animation */
+.avatar-speaking {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* Button styles */
+.btn-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors;
+}
+
+.btn-secondary {
+    @apply px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors;
+}
+
+.btn-outline {
+    @apply px-4 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors;
+}
+
+/* Card hover effects */
+.card-hover {
+    transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .grid-cols-1 {
+        grid-template-columns: 1fr;
+    }
+    
+    .chat-message {
+        max-width: 80%;
+    }
+    
+    #chat-messages {
+        height: 200px;
+    }
+}
+
+/* Voice indicator */
+.voice-indicator {
+    position: relative;
+}
+
+.voice-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10px;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Lesson completion indicator */
+.lesson-completed {
+    position: relative;
+}
+
+.lesson-completed::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #10b981;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Subject icon styling */
+.subject-icon {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center text-xl font-semibold text-white;
+}
+
+/* Smooth transitions */
+* {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Focus styles */
+input:focus, button:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
+    ring-opacity: 50%;
+}
