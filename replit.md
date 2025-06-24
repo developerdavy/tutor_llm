@@ -79,6 +79,10 @@ This is a full-stack AI-powered tutoring platform that combines:
 
 ## Next Steps
 - Set up Google API key for full AI functionality
-- Test WordPress plugin integration
-- Deploy to production environment
+- Test WordPress plugin integration locally (no deployment needed)
 - Add advanced AI features like personalized learning paths
+
+## WordPress Plugin Deployment Options
+- **Local Mode**: Uses Google API directly from WordPress (no deployment required)
+- **Backend Mode**: Connects to deployed Replit backend for advanced features
+- **Hybrid Mode**: Falls back gracefully between both approaches

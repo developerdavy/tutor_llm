@@ -3,10 +3,12 @@
 class AI_Tutor_API {
     
     private $ai_backend_url;
+    private $direct_ai;
     
     public function __construct() {
         // Configure AI backend URL - should be set in WordPress settings
         $this->ai_backend_url = get_option('ai_tutor_backend_url', '');
+        $this->direct_ai = new AI_Tutor_Direct_AI();
     }
     
     public function init() {
@@ -265,33 +267,36 @@ class AI_Tutor_API {
         $lesson_title = $lesson->post_title;
         $lesson_content = $lesson->post_content;
         
-        // Get chat history for context
-        global $wpdb;
-        $user_id = get_current_user_id();
-        $table_name = $wpdb->prefix . 'ai_tutor_chat_messages';
-        $chat_history = $wpdb->get_results($wpdb->prepare(
-            "SELECT message, is_from_user FROM $table_name WHERE user_id = %d AND lesson_id = %d ORDER BY timestamp DESC LIMIT 10",
-            $user_id, $lesson_id
-        ));
-        
-        // Prepare data for AI backend
-        $data = array(
-            'message' => $message,
-            'subject' => $subject,
-            'lessonTitle' => $lesson_title,
-            'lessonContent' => $lesson_content,
-            'chatHistory' => $chat_history
-        );
-        
-        // Call AI backend
-        $response = $this->call_ai_backend('/api/chat', $data);
-        
-        if ($response && isset($response['response'])) {
-            return $response['response'];
+        // Try backend first if configured
+        if (!empty($this->ai_backend_url)) {
+            // Get chat history for context
+            global $wpdb;
+            $user_id = get_current_user_id();
+            $table_name = $wpdb->prefix . 'ai_tutor_chat_messages';
+            $chat_history = $wpdb->get_results($wpdb->prepare(
+                "SELECT message, is_from_user FROM $table_name WHERE user_id = %d AND lesson_id = %d ORDER BY timestamp DESC LIMIT 10",
+                $user_id, $lesson_id
+            ));
+            
+            // Prepare data for AI backend
+            $data = array(
+                'message' => $message,
+                'subject' => $subject,
+                'lessonTitle' => $lesson_title,
+                'lessonContent' => $lesson_content,
+                'chatHistory' => $chat_history
+            );
+            
+            // Call AI backend
+            $response = $this->call_ai_backend('/api/chat', $data);
+            
+            if ($response && isset($response['response'])) {
+                return $response['response'];
+            }
         }
         
-        // Fallback to contextual response
-        return $this->generate_contextual_fallback($message, $lesson_title, $subject);
+        // Use direct AI if backend not available
+        return $this->direct_ai->generate_tutor_response($message, $subject, $lesson_title, $lesson_content);
     }
     
     private function call_ai_backend($endpoint, $data) {
@@ -399,7 +404,31 @@ class AI_Tutor_API {
             'level' => $level
         );
         
-        $response = $this->call_ai_backend('/api/lessons/' . $lesson_id . '/generate', $data);
+        // Try backend first if configured
+        if (!empty($this->ai_backend_url)) {
+            $response = $this->call_ai_backend('/api/lessons/' . $lesson_id . '/generate', $data);
+            
+            if ($response) {
+                // Save generated content to lesson
+                wp_update_post(array(
+                    'ID' => $lesson_id,
+                    'post_content' => $response['content']
+                ));
+                
+                // Save additional metadata
+                if (isset($response['examples'])) {
+                    update_post_meta($lesson_id, '_ai_lesson_examples', json_encode($response['examples']));
+                }
+                if (isset($response['quiz'])) {
+                    update_post_meta($lesson_id, '_ai_lesson_quiz', json_encode($response['quiz']));
+                }
+                
+                return rest_ensure_response($response);
+            }
+        }
+        
+        // Use direct AI if backend not available
+        $response = $this->direct_ai->generate_lesson_content($subject, $lesson->post_title, $level);
         
         if ($response) {
             // Save generated content to lesson
@@ -449,11 +478,19 @@ class AI_Tutor_API {
             'count' => $count
         );
         
-        $response = $this->call_ai_backend('/api/questions/generate', $data);
-        
-        if ($response) {
-            return rest_ensure_response($response);
+        // Try backend first if configured
+        if (!empty($this->ai_backend_url)) {
+            $response = $this->call_ai_backend('/api/questions/generate', $data);
+            
+            if ($response) {
+                return rest_ensure_response($response);
+            }
         }
+        
+        // Use direct AI if backend not available
+        $questions = $this->direct_ai->generate_questions($subject, $lesson->post_title, $lesson->post_content, $question_type, $difficulty, $count);
+        
+        return rest_ensure_response(array('questions' => $questions));
         
         return new WP_Error('generation_failed', 'Failed to generate questions', array('status' => 500));
     }
@@ -476,11 +513,19 @@ class AI_Tutor_API {
             'subject' => $subject
         );
         
-        $response = $this->call_ai_backend('/api/evaluate', $data);
-        
-        if ($response) {
-            return rest_ensure_response($response);
+        // Try backend first if configured
+        if (!empty($this->ai_backend_url)) {
+            $response = $this->call_ai_backend('/api/evaluate', $data);
+            
+            if ($response) {
+                return rest_ensure_response($response);
+            }
         }
+        
+        // Use direct AI if backend not available
+        $evaluation = $this->direct_ai->evaluate_answer($question, $user_answer, $correct_answer, $subject);
+        
+        return rest_ensure_response($evaluation);
         
         return new WP_Error('evaluation_failed', 'Failed to evaluate answer', array('status' => 500));
     }
