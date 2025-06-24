@@ -187,6 +187,7 @@ class AI_Tutor {
     }
     
     public function add_admin_menu() {
+        // Main AI Tutor menu
         add_menu_page(
             'AI Tutor',
             'AI Tutor',
@@ -197,12 +198,22 @@ class AI_Tutor {
             30
         );
         
+        // Settings submenu
         add_submenu_page(
             'ai-tutor',
-            'Settings',
+            'AI Tutor Settings',
             'Settings',
             'manage_options',
             'ai-tutor-settings',
+            array($this, 'settings_page')
+        );
+        
+        // Also add under Settings menu for easier access
+        add_options_page(
+            'AI Tutor Settings',
+            'AI Tutor',
+            'manage_options',
+            'ai-tutor-options',
             array($this, 'settings_page')
         );
     }
@@ -212,46 +223,68 @@ class AI_Tutor {
     }
     
     public function settings_page() {
-        if (isset($_POST['submit'])) {
+        if (isset($_POST['submit']) && wp_verify_nonce($_POST['ai_tutor_settings_nonce'], 'ai_tutor_settings')) {
             update_option('ai_tutor_backend_url', sanitize_url($_POST['backend_url']));
             update_option('ai_tutor_api_key', sanitize_text_field($_POST['api_key']));
+            update_option('ai_tutor_google_api_key', sanitize_text_field($_POST['google_api_key']));
             echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
         }
         
         $backend_url = get_option('ai_tutor_backend_url', '');
         $api_key = get_option('ai_tutor_api_key', '');
+        $google_api_key = get_option('ai_tutor_google_api_key', '');
         ?>
         <div class="wrap">
             <h1>AI Tutor Settings</h1>
             <form method="post" action="">
+                <?php wp_nonce_field('ai_tutor_settings', 'ai_tutor_settings_nonce'); ?>
+                
+                <h2>Local AI Setup (Recommended)</h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Google API Key</th>
+                        <td>
+                            <input type="password" name="google_api_key" value="<?php echo esc_attr($google_api_key); ?>" class="regular-text" />
+                            <p class="description">
+                                Get your free API key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>. 
+                                This enables AI content generation directly in WordPress without needing external servers.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <h2>External Backend (Optional)</h2>
                 <table class="form-table">
                     <tr>
                         <th scope="row">AI Backend URL</th>
                         <td>
                             <input type="url" name="backend_url" value="<?php echo esc_attr($backend_url); ?>" class="regular-text" placeholder="https://your-replit-url.replit.app" />
-                            <p class="description">Enter the URL of your AI backend service (Replit app URL)</p>
+                            <p class="description">Optional: If you have a deployed Replit backend, enter the URL here</p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">API Key</th>
+                        <th scope="row">Backend API Key</th>
                         <td>
                             <input type="password" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="regular-text" />
-                            <p class="description">Optional API key for authentication</p>
+                            <p class="description">Optional API key for backend authentication</p>
                         </td>
                     </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>
             
-            <h2>Integration Instructions</h2>
-            <p>To use the AI-powered features in your WordPress content:</p>
-            <ol>
-                <li>Configure the AI Backend URL above (your Replit app URL)</li>
-                <li>Create subjects using the "AI Subjects" post type</li>
-                <li>Create lessons using the "AI Lessons" post type</li>
-                <li>Use the shortcode <code>[ai_tutor_ai_lesson lesson_id="123"]</code> to display AI-powered lessons</li>
-                <li>Lessons will include real-time AI chat, content generation, and question generation</li>
-            </ol>
+            <h2>Setup Instructions</h2>
+            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #0073aa; margin: 20px 0;">
+                <h3>Quick Setup (No Deployment Required)</h3>
+                <ol>
+                    <li>Get a free Google API key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a></li>
+                    <li>Enter the API key in the "Google API Key" field above</li>
+                    <li>Save settings</li>
+                    <li>Create subjects and lessons using the WordPress admin</li>
+                    <li>Use <code>[ai_tutor_ai_lesson lesson_id="123"]</code> in your posts/pages</li>
+                </ol>
+                <p><strong>That's it!</strong> The plugin will generate AI content directly from WordPress.</p>
+            </div>
             
             <h3>Available Shortcodes:</h3>
             <ul>
@@ -260,6 +293,18 @@ class AI_Tutor {
                 <li><code>[ai_tutor_lesson lesson_id="123"]</code> - Basic lesson display</li>
                 <li><code>[ai_tutor_ai_lesson lesson_id="123"]</code> - AI-powered lesson with chat and generation features</li>
             </ul>
+            
+            <h3>Current Status:</h3>
+            <div style="background: <?php echo $google_api_key ? '#dff0d8' : '#f2dede'; ?>; padding: 10px; border-radius: 4px; margin: 15px 0;">
+                <?php if ($google_api_key): ?>
+                    <strong>✓ Google API Key configured</strong> - AI features are enabled
+                <?php else: ?>
+                    <strong>⚠ Google API Key missing</strong> - Add your key above to enable AI features
+                <?php endif; ?>
+            </div>
+            
+            <h3>How It Works:</h3>
+            <p>The plugin first tries to use your external backend (if configured), then falls back to direct Google AI integration. This means you get AI functionality even without deploying anything!</p>
         </div>
         <?php
     }

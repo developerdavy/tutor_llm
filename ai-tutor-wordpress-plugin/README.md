@@ -1,158 +1,94 @@
 # AI Tutor WordPress Plugin
 
-An interactive AI tutoring platform for WordPress with personalized learning experiences, AI-generated lesson content, and real-time chat functionality.
+An AI-powered educational plugin for WordPress that provides intelligent tutoring, content generation, and interactive learning experiences.
 
 ## Features
 
-- 📚 **Subject Management**: Create and organize learning subjects with custom icons and colors
-- 📖 **Lesson System**: Build comprehensive lessons with difficulty levels and estimated duration
-- 🤖 **AI Chat Integration**: Real-time chat with AI tutors using OpenAI or Google Gemini
-- 📊 **Progress Tracking**: Monitor user learning progress and completion rates
-- 🔊 **Voice Features**: Text-to-speech for AI responses (optional)
-- 📱 **Responsive Design**: Works perfectly on desktop and mobile devices
-- 🎨 **Customizable**: Easy to style and integrate with any WordPress theme
+- **AI-Powered Chat**: Real-time conversations with an AI tutor
+- **Content Generation**: Automatic lesson creation with examples and quizzes
+- **Question Generation**: Dynamic assessment creation
+- **Progress Tracking**: Student learning analytics
+- **Multiple Deployment Options**: Works locally or with external backend
 
 ## Installation
 
 1. Download the plugin files
-2. Upload the `ai-tutor-wordpress-plugin` folder to your `/wp-content/plugins/` directory
+2. Upload to `/wp-content/plugins/ai-tutor-wordpress-plugin/`
 3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure your API keys in the AI Tutor settings page
+4. Configure settings in **AI Tutor > Settings** or **Settings > AI Tutor**
 
-## Configuration
+## Setup
 
-### API Keys Setup
+### Option 1: Local Setup (Recommended)
+1. Get a free Google API key from [Google AI Studio](https://aistudio.google.com/)
+2. Go to **AI Tutor > Settings** in WordPress admin
+3. Enter your Google API key
+4. Save settings
 
-1. Go to **AI Tutor > Settings** in your WordPress admin
-2. Add your API keys:
-   - **OpenAI API Key**: For chat functionality ([Get your key](https://platform.openai.com/api-keys))
-   - **Google Gemini API Key**: For content generation ([Get your key](https://makersuite.google.com/app/apikey))
-
-### Creating Content
-
-1. **Add Subjects**: Go to **AI Tutor > Add New Subject**
-   - Set title, description, icon, and color
-   - Icons can be emojis or text (e.g., 📊, 🧪, ⚛️, 📚)
-
-2. **Add Lessons**: Go to **AI Tutor > Add New Lesson**
-   - Assign to a subject
-   - Set order, difficulty, and estimated duration
-   - Add lesson content and description
+### Option 2: External Backend (Optional)
+1. Deploy your Replit backend
+2. Enter the backend URL in settings
+3. Configure API key if needed
 
 ## Usage
 
-### Shortcodes
+### Creating Content
+1. Create subjects using **AI Subjects** post type
+2. Create lessons using **AI Lessons** post type
+3. Use shortcodes in posts/pages
 
-Display the AI Tutor on your pages using these shortcodes:
+### Available Shortcodes
+- `[ai_tutor_dashboard]` - Main dashboard
+- `[ai_tutor_subjects]` - Subject listing
+- `[ai_tutor_lesson lesson_id="123"]` - Basic lesson display
+- `[ai_tutor_ai_lesson lesson_id="123"]` - AI-powered lesson with full features
 
-#### Full Dashboard
-```
-[ai_tutor_dashboard]
-```
-Shows the complete learning interface with subjects, lessons, chat, and progress tracking.
+### AI Features
+- **Content Generation**: Click "Generate AI Content" on lessons
+- **Real-time Chat**: Interactive AI tutor conversations
+- **Question Generation**: Create custom quizzes automatically
+- **Answer Evaluation**: Intelligent feedback on student responses
 
-#### Subjects Grid
-```
-[ai_tutor_subjects show_progress="true"]
-```
-Displays all subjects in a grid layout with optional progress indicators.
+## Post Types
 
-#### Individual Lesson
-```
-[ai_tutor_lesson lesson_id="123"]
-```
-Shows a specific lesson with its content and chat interface.
+### AI Subjects
+- **Name**: Subject title
+- **Description**: Brief description
+- **Icon**: Icon identifier
+- **Color**: Theme color
 
-### Page Setup Examples
+### AI Lessons
+- **Title**: Lesson name
+- **Content**: Lesson material
+- **Subject**: Associated subject
+- **Difficulty**: Beginner/Intermediate/Advanced
+- **Duration**: Estimated time in minutes
+- **Order**: Sequence within subject
 
-**Main Learning Page**
-Create a new page and add:
-```
-[ai_tutor_dashboard]
-```
+## Database Tables
 
-**Subjects Overview**
-Create a page for subject browsing:
-```
-[ai_tutor_subjects]
-```
-
-**Direct Lesson Access**
-Link to specific lessons:
-```
-[ai_tutor_lesson lesson_id="123"]
-```
-
-## Customization
-
-### CSS Classes
-
-Override these CSS classes to match your theme:
-
-- `.ai-tutor-container` - Main container
-- `.ai-tutor-card` - Content cards
-- `.ai-tutor-btn` - Buttons
-- `.ai-tutor-subject-card` - Subject cards
-- `.lesson-item` - Individual lessons
-- `.chat-message` - Chat messages
-
-### JavaScript Events
-
-Extend functionality using these events:
-
-```javascript
-// Subject selection
-document.addEventListener('ai_tutor_subject_selected', function(e) {
-    console.log('Subject selected:', e.detail.subjectId);
-});
-
-// Lesson completion
-document.addEventListener('ai_tutor_lesson_completed', function(e) {
-    console.log('Lesson completed:', e.detail.lessonId);
-});
-
-// Chat interaction
-document.addEventListener('ai_tutor_chat_message', function(e) {
-    console.log('Chat message:', e.detail.message);
-});
-```
-
-## Database Structure
-
-The plugin creates two custom tables:
-
-### `wp_ai_tutor_user_progress`
-- Tracks user progress through lessons
-- Stores completion status and progress percentage
-- Links users to subjects and lessons
-
-### `wp_ai_tutor_chat_messages`
-- Stores chat conversation history
-- Separates user messages from AI responses
-- Links conversations to specific lessons
+The plugin creates these tables:
+- `wp_ai_tutor_user_progress` - Learning progress tracking
+- `wp_ai_tutor_chat_messages` - Chat conversation history
 
 ## Requirements
 
-- WordPress 5.0 or higher
-- PHP 7.4 or higher
-- MySQL 5.6 or higher
-- cURL extension for API calls
-- JSON extension for data handling
+- WordPress 5.0+
+- PHP 7.4+
+- MySQL 5.6+
+- Google API key (for AI features)
+
+## Security
+
+- Input sanitization on all forms
+- Nonce verification for admin actions
+- Capability checks for admin functions
+- Secure API communication
 
 ## Support
 
-For support and documentation, visit the plugin admin page at **AI Tutor > Dashboard** in your WordPress admin.
+For issues or questions, check the settings page for configuration help and status indicators.
 
 ## License
 
-This plugin is licensed under the GPL v2 or later.
-
-## Changelog
-
-### Version 1.0.0
-- Initial release
-- Subject and lesson management
-- AI chat integration
-- Progress tracking
-- Responsive design
-- Shortcode support
+GPL v2 or later
