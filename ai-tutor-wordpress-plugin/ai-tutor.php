@@ -24,11 +24,15 @@ require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-ai-tutor.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-database.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-api.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-shortcodes.php';
+require_once AI_TUTOR_PLUGIN_PATH . 'admin/ai-settings-page.php';
 
 // Initialize the plugin
 function ai_tutor_init() {
     $ai_tutor = new AI_Tutor();
     $ai_tutor->init();
+    
+    $ai_settings = new AI_Tutor_Settings();
+    $ai_settings->init();
 }
 add_action('plugins_loaded', 'ai_tutor_init');
 

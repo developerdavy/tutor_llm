@@ -2,11 +2,22 @@
 
 class AI_Tutor_API {
     
+    private $ai_backend_url;
+    
+    public function __construct() {
+        // Configure AI backend URL - should be set in WordPress settings
+        $this->ai_backend_url = get_option('ai_tutor_backend_url', 'https://your-replit-url.replit.app');
+    }
+    
     public function init() {
         add_action('rest_api_init', array($this, 'register_routes'));
         add_action('wp_ajax_ai_tutor_chat', array($this, 'handle_chat'));
+        add_action('wp_ajax_nopriv_ai_tutor_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_ai_tutor_progress', array($this, 'update_progress'));
         add_action('wp_ajax_ai_tutor_generate_content', array($this, 'generate_lesson_content'));
+        add_action('wp_ajax_ai_tutor_generate_questions', array($this, 'generate_questions'));
+        add_action('wp_ajax_ai_tutor_evaluate_answer', array($this, 'evaluate_answer'));
+        add_action('wp_ajax_ai_tutor_test_connection', array($this, 'test_connection'));
     }
     
     public function register_routes() {
@@ -37,6 +48,24 @@ class AI_Tutor_API {
         register_rest_route('ai-tutor/v1', '/chat', array(
             'methods' => 'POST',
             'callback' => array($this, 'handle_chat_api'),
+            'permission_callback' => 'is_user_logged_in'
+        ));
+        
+        register_rest_route('ai-tutor/v1', '/lessons/(?P<id>\d+)/generate', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'generate_lesson_content_api'),
+            'permission_callback' => 'is_user_logged_in'
+        ));
+        
+        register_rest_route('ai-tutor/v1', '/lessons/(?P<id>\d+)/questions', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'generate_questions_api'),
+            'permission_callback' => 'is_user_logged_in'
+        ));
+        
+        register_rest_route('ai-tutor/v1', '/evaluate', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'evaluate_answer_api'),
             'permission_callback' => 'is_user_logged_in'
         ));
     }
@@ -227,21 +256,87 @@ class AI_Tutor_API {
     }
     
     private function generate_ai_response($message, $lesson_id) {
-        // Simplified AI response for WordPress
-        // In production, integrate with OpenAI API or Google Gemini
-        
         $lesson = get_post($lesson_id);
-        $lesson_title = $lesson ? $lesson->post_title : 'this lesson';
+        if (!$lesson) {
+            return "I'm sorry, I couldn't find the lesson information. Please try again.";
+        }
         
-        $responses = array(
-            "That's a great question about {$lesson_title}! Let me help you understand this concept better.",
-            "I can see you're working on {$lesson_title}. Here's how I would approach this problem...",
-            "Excellent question! This relates to the key concepts we're covering in {$lesson_title}.",
-            "Let me break this down for you step by step, focusing on the {$lesson_title} principles.",
-            "Good thinking! This is exactly the type of problem-solving we want to develop in {$lesson_title}."
+        $subject = get_post_meta($lesson_id, '_ai_lesson_subject', true) ?: 'General';
+        $lesson_title = $lesson->post_title;
+        $lesson_content = $lesson->post_content;
+        
+        // Get chat history for context
+        global $wpdb;
+        $user_id = get_current_user_id();
+        $table_name = $wpdb->prefix . 'ai_tutor_chat_messages';
+        $chat_history = $wpdb->get_results($wpdb->prepare(
+            "SELECT message, is_from_user FROM $table_name WHERE user_id = %d AND lesson_id = %d ORDER BY timestamp DESC LIMIT 10",
+            $user_id, $lesson_id
+        ));
+        
+        // Prepare data for AI backend
+        $data = array(
+            'message' => $message,
+            'subject' => $subject,
+            'lessonTitle' => $lesson_title,
+            'lessonContent' => $lesson_content,
+            'chatHistory' => $chat_history
         );
         
-        return $responses[array_rand($responses)];
+        // Call AI backend
+        $response = $this->call_ai_backend('/api/chat', $data);
+        
+        if ($response && isset($response['response'])) {
+            return $response['response'];
+        }
+        
+        // Fallback to contextual response
+        return $this->generate_contextual_fallback($message, $lesson_title, $subject);
+    }
+    
+    private function call_ai_backend($endpoint, $data) {
+        $url = rtrim($this->ai_backend_url, '/') . $endpoint;
+        
+        $args = array(
+            'method' => 'POST',
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . get_option('ai_tutor_api_key', '')
+            ),
+            'body' => json_encode($data),
+            'timeout' => 30
+        );
+        
+        $response = wp_remote_request($url, $args);
+        
+        if (is_wp_error($response)) {
+            error_log('AI Backend Error: ' . $response->get_error_message());
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $decoded = json_decode($body, true);
+        
+        if (wp_remote_retrieve_response_code($response) !== 200) {
+            error_log('AI Backend HTTP Error: ' . wp_remote_retrieve_response_code($response));
+            return false;
+        }
+        
+        return $decoded;
+    }
+    
+    private function generate_contextual_fallback($message, $lesson_title, $subject) {
+        $message_lower = strtolower($message);
+        
+        if (strpos($message_lower, 'explain') !== false || strpos($message_lower, 'how') !== false) {
+            return "I'd be happy to explain this {$subject} concept from {$lesson_title}. Let me break it down step by step for you. What specific part would you like me to focus on?";
+        } elseif (strpos($message_lower, 'example') !== false) {
+            return "Great question! Examples are really helpful for understanding {$subject}. Let me provide a relevant example from {$lesson_title} that illustrates this concept.";
+        } elseif (strpos($message_lower, 'help') !== false || strpos($message_lower, 'stuck') !== false) {
+            return "I can see you need some help with {$lesson_title}. That's completely normal - {$subject} can be challenging! Let's work through this together. What specific step is giving you trouble?";
+        } else {
+            return "That's a thoughtful question about {$lesson_title}! This {$subject} concept connects to several important principles. Could you be more specific about what aspect you'd like to explore?";
+        }
     }
     
     public function handle_chat_api($request) {
@@ -281,5 +376,252 @@ class AI_Tutor_API {
         );
         
         return rest_ensure_response(array('response' => $ai_response));
+    }
+    
+    public function generate_lesson_content_api($request) {
+        if (!is_user_logged_in()) {
+            return new WP_Error('unauthorized', 'User not logged in', array('status' => 401));
+        }
+        
+        $lesson_id = $request['id'];
+        $lesson = get_post($lesson_id);
+        
+        if (!$lesson || $lesson->post_type !== 'ai_lesson') {
+            return new WP_Error('lesson_not_found', 'Lesson not found', array('status' => 404));
+        }
+        
+        $subject = get_post_meta($lesson_id, '_ai_lesson_subject', true) ?: 'General';
+        $level = get_post_meta($lesson_id, '_ai_lesson_level', true) ?: 'high school';
+        
+        $data = array(
+            'subject' => $subject,
+            'topic' => $lesson->post_title,
+            'level' => $level
+        );
+        
+        $response = $this->call_ai_backend('/api/lessons/' . $lesson_id . '/generate', $data);
+        
+        if ($response) {
+            // Save generated content to lesson
+            wp_update_post(array(
+                'ID' => $lesson_id,
+                'post_content' => $response['content']
+            ));
+            
+            // Save additional metadata
+            if (isset($response['examples'])) {
+                update_post_meta($lesson_id, '_ai_lesson_examples', json_encode($response['examples']));
+            }
+            if (isset($response['quiz'])) {
+                update_post_meta($lesson_id, '_ai_lesson_quiz', json_encode($response['quiz']));
+            }
+            
+            return rest_ensure_response($response);
+        }
+        
+        return new WP_Error('generation_failed', 'Failed to generate content', array('status' => 500));
+    }
+    
+    public function generate_questions_api($request) {
+        if (!is_user_logged_in()) {
+            return new WP_Error('unauthorized', 'User not logged in', array('status' => 401));
+        }
+        
+        $lesson_id = $request['id'];
+        $lesson = get_post($lesson_id);
+        
+        if (!$lesson) {
+            return new WP_Error('lesson_not_found', 'Lesson not found', array('status' => 404));
+        }
+        
+        $params = $request->get_json_params();
+        $question_type = $params['type'] ?? 'multiple_choice';
+        $difficulty = $params['difficulty'] ?? 'medium';
+        $count = intval($params['count'] ?? 5);
+        
+        $data = array(
+            'lesson_id' => $lesson_id,
+            'subject' => get_post_meta($lesson_id, '_ai_lesson_subject', true) ?: 'General',
+            'topic' => $lesson->post_title,
+            'content' => $lesson->post_content,
+            'type' => $question_type,
+            'difficulty' => $difficulty,
+            'count' => $count
+        );
+        
+        $response = $this->call_ai_backend('/api/questions/generate', $data);
+        
+        if ($response) {
+            return rest_ensure_response($response);
+        }
+        
+        return new WP_Error('generation_failed', 'Failed to generate questions', array('status' => 500));
+    }
+    
+    public function evaluate_answer_api($request) {
+        if (!is_user_logged_in()) {
+            return new WP_Error('unauthorized', 'User not logged in', array('status' => 401));
+        }
+        
+        $params = $request->get_json_params();
+        $question = $params['question'] ?? '';
+        $user_answer = $params['user_answer'] ?? '';
+        $correct_answer = $params['correct_answer'] ?? '';
+        $subject = $params['subject'] ?? 'General';
+        
+        $data = array(
+            'question' => $question,
+            'user_answer' => $user_answer,
+            'correct_answer' => $correct_answer,
+            'subject' => $subject
+        );
+        
+        $response = $this->call_ai_backend('/api/evaluate', $data);
+        
+        if ($response) {
+            return rest_ensure_response($response);
+        }
+        
+        return new WP_Error('evaluation_failed', 'Failed to evaluate answer', array('status' => 500));
+    }
+    
+    public function generate_lesson_content() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+        
+        $lesson_id = intval($_POST['lesson_id']);
+        $lesson = get_post($lesson_id);
+        
+        if (!$lesson) {
+            wp_send_json_error('Lesson not found');
+            return;
+        }
+        
+        $subject = get_post_meta($lesson_id, '_ai_lesson_subject', true) ?: 'General';
+        $level = get_post_meta($lesson_id, '_ai_lesson_level', true) ?: 'high school';
+        
+        $data = array(
+            'subject' => $subject,
+            'topic' => $lesson->post_title,
+            'level' => $level
+        );
+        
+        $response = $this->call_ai_backend('/api/lessons/' . $lesson_id . '/generate', $data);
+        
+        if ($response) {
+            // Update lesson content
+            wp_update_post(array(
+                'ID' => $lesson_id,
+                'post_content' => $response['content']
+            ));
+            
+            // Save additional data
+            if (isset($response['examples'])) {
+                update_post_meta($lesson_id, '_ai_lesson_examples', json_encode($response['examples']));
+            }
+            if (isset($response['quiz'])) {
+                update_post_meta($lesson_id, '_ai_lesson_quiz', json_encode($response['quiz']));
+            }
+            
+            wp_send_json_success($response);
+        } else {
+            wp_send_json_error('Failed to generate content');
+        }
+    }
+    
+    public function generate_questions() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error('User not logged in');
+            return;
+        }
+        
+        $lesson_id = intval($_POST['lesson_id']);
+        $question_type = sanitize_text_field($_POST['type']);
+        $difficulty = sanitize_text_field($_POST['difficulty']);
+        $count = intval($_POST['count']);
+        
+        $lesson = get_post($lesson_id);
+        if (!$lesson) {
+            wp_send_json_error('Lesson not found');
+            return;
+        }
+        
+        $data = array(
+            'lesson_id' => $lesson_id,
+            'subject' => get_post_meta($lesson_id, '_ai_lesson_subject', true) ?: 'General',
+            'topic' => $lesson->post_title,
+            'content' => $lesson->post_content,
+            'type' => $question_type,
+            'difficulty' => $difficulty,
+            'count' => $count
+        );
+        
+        $response = $this->call_ai_backend('/api/questions/generate', $data);
+        
+        if ($response) {
+            wp_send_json_success($response);
+        } else {
+            wp_send_json_error('Failed to generate questions');
+        }
+    }
+    
+    public function evaluate_answer() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error('User not logged in');
+            return;
+        }
+        
+        $question = sanitize_text_field($_POST['question']);
+        $user_answer = sanitize_text_field($_POST['user_answer']);
+        $correct_answer = sanitize_text_field($_POST['correct_answer']);
+        $subject = sanitize_text_field($_POST['subject']);
+        
+        $data = array(
+            'question' => $question,
+            'user_answer' => $user_answer,
+            'correct_answer' => $correct_answer,
+            'subject' => $subject
+        );
+        
+        $response = $this->call_ai_backend('/api/evaluate', $data);
+        
+        if ($response) {
+            wp_send_json_success($response);
+        } else {
+            wp_send_json_error('Failed to evaluate answer');
+        }
+    }
+    
+    public function test_connection() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+        
+        $test_data = array(
+            'message' => 'Hello, this is a connection test.',
+            'subject' => 'General',
+            'lessonTitle' => 'Test Lesson',
+            'lessonContent' => 'This is a test to verify AI connectivity.',
+            'chatHistory' => array()
+        );
+        
+        $response = $this->call_ai_backend('/api/chat', $test_data);
+        
+        if ($response && isset($response['response'])) {
+            wp_send_json_success(array('response' => $response['response']));
+        } else {
+            wp_send_json_error('Failed to connect to AI backend. Please check your settings.');
+        }
     }
 }

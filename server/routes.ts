@@ -211,6 +211,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // WordPress compatible chat endpoint
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message, subject, lessonTitle, lessonContent, chatHistory } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      // Convert WordPress chat history format
+      const formattedHistory = chatHistory?.map((msg: any) => ({
+        message: msg.message,
+        isFromUser: Boolean(msg.is_from_user)
+      })) || [];
+
+      const context = lessonContent ? `${lessonTitle}: ${lessonContent}` : lessonTitle;
+      const aiResponse = await generateTutorResponse(message, subject, context, undefined, formattedHistory);
+
+      res.json({ response: aiResponse });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to process chat message",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Generate questions endpoint
+  app.post("/api/questions/generate", async (req, res) => {
+    try {
+      const { subject, topic, content, type, difficulty, count } = req.body;
+      
+      const questions = await generateQuestions(subject, topic, content, type, difficulty, count);
+      res.json({ questions });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate questions",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Evaluate answer endpoint
+  app.post("/api/evaluate", async (req, res) => {
+    try {
+      const { question, user_answer, correct_answer, subject } = req.body;
+      
+      const evaluation = await evaluateAnswer(question, user_answer, correct_answer, subject);
+      res.json(evaluation);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to evaluate answer",
+        error: (error as Error).message 
+      });
+    }
+  });
+
   // Send message to AI tutor
   app.post("/api/users/:userId/lessons/:lessonId/chat", async (req, res) => {
     try {
