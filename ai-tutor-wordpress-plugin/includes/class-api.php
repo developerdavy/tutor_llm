@@ -6,7 +6,7 @@ class AI_Tutor_API {
     
     public function __construct() {
         // Configure AI backend URL - should be set in WordPress settings
-        $this->ai_backend_url = get_option('ai_tutor_backend_url', 'https://your-replit-url.replit.app');
+        $this->ai_backend_url = get_option('ai_tutor_backend_url', '');
     }
     
     public function init() {

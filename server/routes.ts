@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateLessonContent, generateTutorResponse } from "./services/gemini";
+import { generateLessonContent, generateTutorResponse, evaluateAnswer, generateQuestions } from "./services/gemini";
 import { hashPassword, comparePassword, generateToken, authenticateToken, optionalAuth, type AuthRequest } from "./auth";
 import { registerSchema, loginSchema } from "@shared/schema";
 import { insertChatMessageSchema } from "@shared/schema";
@@ -313,6 +313,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         message: "Failed to process chat message",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // WordPress plugin compatible chat endpoint
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message, subject, lessonTitle, lessonContent, chatHistory } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      const context = lessonTitle ? `${lessonTitle}: ${lessonContent}` : "";
+      const subjectName = subject || "General";
+
+      // Generate AI response with chat history context
+      const aiResponse = await generateTutorResponse(message, subjectName, context, undefined, chatHistory);
+
+      res.json({
+        response: aiResponse
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to process chat message",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Generate questions endpoint for WordPress
+  app.post("/api/questions/generate", async (req, res) => {
+    try {
+      const { subject, topic, content, type, difficulty, count } = req.body;
+
+      if (!subject || !topic) {
+        return res.status(400).json({ message: "Subject and topic are required" });
+      }
+
+      // Generate questions using AI
+      const questions = await generateQuestions(subject, topic, content, type, difficulty, count);
+
+      res.json({
+        questions
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate questions",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Evaluate answer endpoint for WordPress
+  app.post("/api/evaluate", async (req, res) => {
+    try {
+      const { question, user_answer, correct_answer, subject } = req.body;
+
+      if (!question || !user_answer || !subject) {
+        return res.status(400).json({ message: "Question, user answer, and subject are required" });
+      }
+
+      // Evaluate answer using AI
+      const evaluation = await evaluateAnswer(question, user_answer, correct_answer, subject);
+
+      res.json(evaluation);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to evaluate answer",
         error: (error as Error).message 
       });
     }

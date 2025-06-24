@@ -6,6 +6,7 @@ class AI_Tutor_Shortcodes {
         add_shortcode('ai_tutor_dashboard', array($this, 'dashboard_shortcode'));
         add_shortcode('ai_tutor_subjects', array($this, 'subjects_shortcode'));
         add_shortcode('ai_tutor_lesson', array($this, 'lesson_shortcode'));
+        add_shortcode('ai_tutor_ai_lesson', array($this, 'ai_lesson_shortcode'));
     }
     
     public function dashboard_shortcode($atts) {
@@ -47,6 +48,24 @@ class AI_Tutor_Shortcodes {
         
         ob_start();
         include AI_TUTOR_PLUGIN_PATH . 'templates/lesson.php';
+        return ob_get_clean();
+    }
+    
+    public function ai_lesson_shortcode($atts) {
+        if (!is_user_logged_in()) {
+            return '<p>Please <a href="' . wp_login_url() . '">log in</a> to access AI-powered lessons.</p>';
+        }
+        
+        $atts = shortcode_atts(array(
+            'lesson_id' => '',
+        ), $atts);
+        
+        if (empty($atts['lesson_id'])) {
+            return '<p>Lesson ID is required.</p>';
+        }
+        
+        ob_start();
+        include AI_TUTOR_PLUGIN_PATH . 'templates/lesson-with-ai.php';
         return ob_get_clean();
     }
 }

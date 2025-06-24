@@ -171,12 +171,14 @@ class AI_Tutor {
     }
     
     public function enqueue_scripts() {
-        wp_enqueue_script('ai-tutor-fixed-js', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-fixed.js', array(), AI_TUTOR_VERSION, true);
-        wp_localize_script('ai-tutor-fixed-js', 'ai_tutor_ajax', array(
+        wp_enqueue_script('ai-tutor', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-ai-powered.js', array('jquery'), AI_TUTOR_VERSION, true);
+        wp_localize_script('ai-tutor', 'ai_tutor', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_tutor_nonce'),
             'rest_url' => rest_url('ai-tutor/v1/'),
-            'rest_nonce' => wp_create_nonce('wp_rest')
+            'rest_nonce' => wp_create_nonce('wp_rest'),
+            'backend_url' => get_option('ai_tutor_backend_url', ''),
+            'api_key' => get_option('ai_tutor_api_key', '')
         ));
     }
     
@@ -210,6 +212,55 @@ class AI_Tutor {
     }
     
     public function settings_page() {
-        include AI_TUTOR_PLUGIN_PATH . 'admin/settings-page.php';
+        if (isset($_POST['submit'])) {
+            update_option('ai_tutor_backend_url', sanitize_url($_POST['backend_url']));
+            update_option('ai_tutor_api_key', sanitize_text_field($_POST['api_key']));
+            echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
+        }
+        
+        $backend_url = get_option('ai_tutor_backend_url', '');
+        $api_key = get_option('ai_tutor_api_key', '');
+        ?>
+        <div class="wrap">
+            <h1>AI Tutor Settings</h1>
+            <form method="post" action="">
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">AI Backend URL</th>
+                        <td>
+                            <input type="url" name="backend_url" value="<?php echo esc_attr($backend_url); ?>" class="regular-text" placeholder="https://your-replit-url.replit.app" />
+                            <p class="description">Enter the URL of your AI backend service (Replit app URL)</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">API Key</th>
+                        <td>
+                            <input type="password" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="regular-text" />
+                            <p class="description">Optional API key for authentication</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button(); ?>
+            </form>
+            
+            <h2>Integration Instructions</h2>
+            <p>To use the AI-powered features in your WordPress content:</p>
+            <ol>
+                <li>Configure the AI Backend URL above (your Replit app URL)</li>
+                <li>Create subjects using the "AI Subjects" post type</li>
+                <li>Create lessons using the "AI Lessons" post type</li>
+                <li>Use the shortcode <code>[ai_tutor_ai_lesson lesson_id="123"]</code> to display AI-powered lessons</li>
+                <li>Lessons will include real-time AI chat, content generation, and question generation</li>
+            </ol>
+            
+            <h3>Available Shortcodes:</h3>
+            <ul>
+                <li><code>[ai_tutor_dashboard]</code> - Main dashboard</li>
+                <li><code>[ai_tutor_subjects]</code> - Subject listing</li>
+                <li><code>[ai_tutor_lesson lesson_id="123"]</code> - Basic lesson display</li>
+                <li><code>[ai_tutor_ai_lesson lesson_id="123"]</code> - AI-powered lesson with chat and generation features</li>
+            </ul>
+        </div>
+        <?php
     }
 }

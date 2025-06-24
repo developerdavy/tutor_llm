@@ -317,30 +317,27 @@ I'm here to help you master these ${subject} concepts!`;
 export async function generateQuestions(
   subject: string,
   topic: string,
-  content: string,
+  content?: string,
   type: string = "multiple_choice",
   difficulty: string = "medium",
   count: number = 5
 ): Promise<any[]> {
   try {
-    const prompt = `Generate ${count} ${difficulty} difficulty ${type} questions about ${topic} in ${subject}. 
-
-Content context: ${content}
-
-Respond ONLY with valid JSON array, no markdown formatting. Use this structure:
-[
-  {
-    "question": "Question text here",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": 0,
-    "explanation": "Why this is correct"
-  }
-]
-
-Generate exactly ${count} questions.`;
+    const prompt = `Generate ${count} ${type} questions about ${topic} in ${subject} at ${difficulty} difficulty level.
+    ${content ? `Based on this content: ${content}` : ''}
+    
+    Respond ONLY with valid JSON array, no markdown formatting, no code blocks. Use this structure:
+    [
+      {
+        "question": "Question text",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswer": 0,
+        "explanation": "Why this is correct"
+      }
+    ]`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
@@ -355,7 +352,7 @@ Generate exactly ${count} questions.`;
     const questions = JSON.parse(responseText);
     return Array.isArray(questions) ? questions : [];
   } catch (error) {
-    console.error("Question Generation Error:", error);
+    console.error("Question generation error:", error);
     return generateFallbackQuestions(subject, topic, count);
   }
 }
@@ -364,14 +361,16 @@ function generateFallbackQuestions(subject: string, topic: string, count: number
   const questions = [];
   for (let i = 0; i < count; i++) {
     questions.push({
-      question: `What is an important concept in ${topic} (${subject})?`,
-      options: ["Concept A", "Concept B", "Concept C", "All of the above"],
+      question: `What is an important concept in ${topic} for ${subject}?`,
+      options: [`Concept A`, `Concept B`, `Concept C`, `All of the above`],
       correctAnswer: 3,
-      explanation: `This question covers fundamental concepts in ${topic}.`
+      explanation: `This ${subject} topic covers multiple important concepts that are fundamental to understanding ${topic}.`
     });
   }
   return questions;
 }
+
+
 
 export async function evaluateAnswer(
   question: string,
