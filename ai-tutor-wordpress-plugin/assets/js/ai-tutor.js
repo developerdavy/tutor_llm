@@ -247,54 +247,69 @@ class AiTutorReact {
             lessonsContainer.classList.remove('hidden');
         }
     }
+    loadLessonContent(lesson) {
+        const container = document.getElementById('lesson-content');
+        if (!container) return;
         
-        loadLessons: function(subjectId) {
-            this.showLoading('#lessons-list');
-            $('#lessons-title').text('Loading lessons...');
+        container.innerHTML = `
+            <div class="lesson-header-full">
+                <div class="lesson-title-section">
+                    <h2 class="lesson-main-title">${lesson.title}</h2>
+                    <div class="lesson-badges">
+                        <span class="difficulty-badge ${lesson.difficulty}">${lesson.difficulty}</span>
+                        <span class="duration-badge">⏱️ ${lesson.estimatedDuration} min</span>
+                    </div>
+                </div>
+                <p class="lesson-main-description">${lesson.description}</p>
+            </div>
             
-            fetch(`/wp-json/ai-tutor/v1/subjects/${subjectId}/lessons`)
-                .then(response => response.json())
-                .then(data => {
-                    this.renderLessons(data, subjectId);
-                })
-                .catch(error => {
-                    console.error('Error loading lessons:', error);
-                    this.showError('#lessons-list', 'Failed to load lessons');
-                });
-        },
+            <div class="lesson-actions">
+                <button onclick="window.aiTutorApp.markLessonComplete(${lesson.id})" 
+                        class="complete-btn ${this.isLessonCompleted(lesson.id) ? 'completed' : ''}">
+                    ${this.isLessonCompleted(lesson.id) ? '✅ Completed' : 'Mark as Complete'}
+                </button>
+                <button onclick="window.aiTutorApp.generateQuiz(${lesson.id})" class="quiz-btn">
+                    📝 Practice Quiz
+                </button>
+            </div>
+        `;
+    }
         
-        renderLessons: function(lessons, subjectId) {
-            const container = $('#lessons-list');
-            const subjectName = $(`.subject-item[data-subject-id="${subjectId}"] strong`).text();
+    sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        if (!input) return;
+        
+        const message = input.value.trim();
+        if (!message || !this.selectedLesson) return;
+        
+        // Add user message
+        this.addChatMessage(message, true);
+        
+        // Clear input
+        input.value = '';
+        
+        // Generate AI response
+        setTimeout(() => {
+            const response = this.generateAIResponse(message);
+            this.addChatMessage(response, false);
             
-            $('#lessons-title').text(`${subjectName} Lessons`);
-            
-            let html = '';
-            
-            if (lessons.length === 0) {
-                html = '<p>No lessons available for this subject.</p>';
-            } else {
-                lessons.forEach(lesson => {
-                    html += `
-                        <div class="lesson-item" data-lesson-id="${lesson.id}">
-                            <h4>${lesson.title}</h4>
-                            <p>${lesson.description}</p>
-                            <div class="lesson-meta">
-                                <span>Lesson ${lesson.order}</span>
-                                <span>${lesson.estimatedDuration} min</span>
-                            </div>
-                        </div>
-                    `;
-                });
+            // Speak response if voice is enabled
+            if (this.config.isVoiceEnabled) {
+                this.speakText(response);
             }
-            
-            container.html(html);
-        },
+        }, 500);
+    }
+    addChatMessage(message, isUser) {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
         
-        handleLessonClick: function(e) {
-            const lessonId = $(e.currentTarget).data('lesson-id');
-            this.selectLesson(lessonId);
-        },
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'} animate-fade-in`;
+        messageDiv.textContent = message;
+        
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+    }
         
         selectLesson: function(lessonId) {
             // Update UI

@@ -103,15 +103,7 @@ $subject_id = isset($atts['subject_id']) ? intval($atts['subject_id']) : '';
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize with React-style functionality
-    if (typeof AiTutorReact !== 'undefined') {
-        window.aiTutorApp = new AiTutorReact({
-            subjectId: '<?php echo esc_js($subject_id); ?>',
-            userId: <?php echo get_current_user_id(); ?>,
-            apiUrl: '<?php echo rest_url('ai-tutor/v1/'); ?>',
-            nonce: '<?php echo wp_create_nonce('wp_rest'); ?>'
-        });
-    }
-});
+// The JavaScript will auto-initialize when DOM is ready
+// No additional script needed here as it's handled in the JS file
+console.log('AI Tutor dashboard template loaded');
 </script>

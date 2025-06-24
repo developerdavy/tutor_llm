@@ -5,6 +5,8 @@
     background-color: #f8fafc;
     min-height: 100vh;
     margin: -20px -20px 0 -20px; /* Override WordPress padding */
+    position: relative;
+    z-index: 1;
 }
 
 /* Navigation */
@@ -267,7 +269,7 @@
 
 .lesson-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
 }

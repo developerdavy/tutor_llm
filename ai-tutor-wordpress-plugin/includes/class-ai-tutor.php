@@ -171,9 +171,8 @@ class AI_Tutor {
     }
     
     public function enqueue_scripts() {
-        wp_enqueue_script('ai-tutor-js', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor.js', array(), AI_TUTOR_VERSION, true);
-        wp_enqueue_script('ai-tutor-complete-js', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-complete.js', array('ai-tutor-js'), AI_TUTOR_VERSION, true);
-        wp_localize_script('ai-tutor-js', 'ai_tutor_ajax', array(
+        wp_enqueue_script('ai-tutor-fixed-js', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-fixed.js', array(), AI_TUTOR_VERSION, true);
+        wp_localize_script('ai-tutor-fixed-js', 'ai_tutor_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_tutor_nonce'),
             'rest_url' => rest_url('ai-tutor/v1/'),
