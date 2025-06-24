@@ -35,12 +35,18 @@ $subjects = get_posts(array(
                 <?php
                 $subject_id = $subject->ID;
                 
-                // Get lessons count for this subject
+                // Get lessons count for this subject (check both meta keys for compatibility)
                 $subject_lessons = get_posts(array(
                     'post_type' => 'ai_lesson',
                     'meta_query' => array(
+                        'relation' => 'OR',
                         array(
                             'key' => '_ai_lesson_subject',
+                            'value' => $subject_id,
+                            'compare' => '='
+                        ),
+                        array(
+                            'key' => '_ai_lesson_subject_id',
                             'value' => $subject_id,
                             'compare' => '='
                         )
