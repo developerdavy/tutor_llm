@@ -46,6 +46,8 @@ class AI_Tutor_Shortcodes {
             return '<p>Lesson ID is required.</p>';
         }
         
+        $lesson_id = intval($atts['lesson_id']);
+        
         ob_start();
         include AI_TUTOR_PLUGIN_PATH . 'templates/lesson.php';
         return ob_get_clean();
@@ -64,8 +66,10 @@ class AI_Tutor_Shortcodes {
             return '<p>Lesson ID is required.</p>';
         }
         
+        $lesson_id = intval($atts['lesson_id']);
+        
         ob_start();
-        include AI_TUTOR_PLUGIN_PATH . 'templates/lesson-with-ai.php';
+        include AI_TUTOR_PLUGIN_PATH . 'templates/ai-lesson.php';
         return ob_get_clean();
     }
 }
