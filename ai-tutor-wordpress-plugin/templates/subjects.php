@@ -526,45 +526,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const subjectDetails = document.getElementById('subject-details');
     const modalClose = document.querySelector('.modal-close');
 
-    // Explore subject buttons
-    document.querySelectorAll('.explore-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const subjectId = this.dataset.subjectId;
-            showSubjectDetails(subjectId);
-        });
-    });
+    // Subject exploration buttons are now handled by ai-tutor-navigation.js
+    // These will automatically use the proper navigation system
 
-    // View lessons buttons
-    document.querySelectorAll('.lessons-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const subjectId = this.dataset.subjectId;
-            showSubjectLessons(subjectId);
-        });
-    });
-
-    // Lesson links - redirect to AI lesson interface
-    document.querySelectorAll('.lesson-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent bubbling to subject card
-            const lessonId = this.dataset.lessonId;
-            
-            console.log('Lesson link clicked, ID:', lessonId);
-            
-            if (window.aiTutorNavigation && typeof window.aiTutorNavigation.selectLesson === 'function') {
-                console.log('Using aiTutorNavigation to select lesson');
-                window.aiTutorNavigation.selectLesson(lessonId);
-            } else if (typeof openAILesson === 'function') {
-                console.log('Using openAILesson fallback');
-                openAILesson(lessonId);
-            } else {
-                console.log('No navigation method available, redirecting');
-                // Final fallback: redirect with lesson parameter
-                const currentUrl = window.location.href.split('?')[0];
-                window.location.href = currentUrl + '?ai_lesson=' + lessonId;
-            }
-        });
-    });
+    // Lesson links are now handled by ai-tutor-navigation.js
+    // No need for duplicate event handlers here
 
     // Close modal
     modalClose.addEventListener('click', function() {

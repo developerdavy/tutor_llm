@@ -171,15 +171,9 @@ class AI_Tutor {
     }
     
     public function enqueue_scripts() {
-        // Core AI Tutor functionality
+        // Core AI Tutor functionality - using only the working navigation system
         wp_enqueue_script('ai-tutor-realtime', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-realtime.js', array('jquery'), AI_TUTOR_VERSION, true);
         wp_enqueue_script('ai-tutor-navigation', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-navigation.js', array('jquery', 'ai-tutor-realtime'), AI_TUTOR_VERSION, true);
-        
-        // Fallback navigation for troubleshooting
-        wp_enqueue_script('ai-tutor-fallback', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-fallback.js', array('jquery'), AI_TUTOR_VERSION, true);
-        
-        // Main AI Tutor script (for backward compatibility)
-        wp_enqueue_script('ai-tutor', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-ai-powered.js', array('jquery', 'ai-tutor-navigation'), AI_TUTOR_VERSION, true);
         
         // Localize scripts with AJAX data
         $localize_data = array(
@@ -194,7 +188,6 @@ class AI_Tutor {
         
         wp_localize_script('ai-tutor-realtime', 'aiTutorAjax', $localize_data);
         wp_localize_script('ai-tutor-navigation', 'aiTutorAjax', $localize_data);
-        wp_localize_script('ai-tutor', 'ai_tutor', $localize_data);
     }
     
     public function enqueue_styles() {

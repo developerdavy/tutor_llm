@@ -80,9 +80,13 @@ class AITutorNavigation {
         // Lesson link clicks (for subjects template compatibility)
         jQuery(document).on('click', '.lesson-link', (e) => {
             e.preventDefault();
+            e.stopPropagation(); // Prevent event bubbling
             const lessonId = jQuery(e.currentTarget).data('lesson-id');
+            console.log('Navigation: Lesson link clicked, ID:', lessonId);
             if (lessonId) {
                 this.selectLesson(lessonId);
+            } else {
+                console.error('Navigation: No lesson ID found on clicked element');
             }
         });
         
