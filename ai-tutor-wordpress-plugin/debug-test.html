@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor Plugin Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background: #007cba; color: white; }
+        .btn-secondary { background: #666; color: white; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #results { max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>AI Tutor Plugin Debug Test</h1>
+    <p>This page tests the connection between WordPress plugin and Replit backend.</p>
+    
+    <div class="test-section">
+        <h3>Backend API Tests</h3>
+        <button class="btn btn-primary" onclick="testBackendConnection()">Test Backend Connection</button>
+        <button class="btn btn-primary" onclick="testChatAPI()">Test Chat API</button>
+        <button class="btn btn-primary" onclick="testContentGeneration()">Test Content Generation</button>
+        <button class="btn btn-secondary" onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:5000';
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testBackendConnection() {
+            addResult('Testing backend connection...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/subjects`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Backend connection successful! Found ${data.length} subjects.`, 'success');
+                    addResult(`Sample subject: ${data[0]?.name || 'None'}`, 'info');
+                } else {
+                    addResult(`❌ Backend responded with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Backend connection failed: ${error.message}`, 'error');
+                addResult('Make sure the Replit backend is running on localhost:5000', 'info');
+            }
+        }
+        
+        async function testChatAPI() {
+            addResult('Testing chat API...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Hello, this is a test message',
+                        lessonId: 1,
+                        subject: 'Mathematics'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Chat API working! Response received.', 'success');
+                    addResult(`AI Response: ${data.response.substring(0, 100)}...`, 'info');
+                } else {
+                    addResult(`❌ Chat API failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Chat API test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testContentGeneration() {
+            addResult('Testing content generation API...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/lessons/1/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subject: 'Mathematics',
+                        topic: 'Basic Algebra',
+                        level: 'beginner'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Content generation working!', 'success');
+                    addResult(`Generated title: ${data.title}`, 'info');
+                    addResult(`Examples: ${data.examples?.length || 0}, Quiz questions: ${data.quiz?.length || 0}`, 'info');
+                } else {
+                    addResult(`❌ Content generation failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Content generation test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run basic connection test on page load
+        window.onload = function() {
+            addResult('Page loaded. Click buttons above to test functionality.', 'info');
+            testBackendConnection();
+        };
+    </script>
+</body>
+</html>

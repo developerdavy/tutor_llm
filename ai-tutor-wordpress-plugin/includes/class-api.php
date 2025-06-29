@@ -6,8 +6,8 @@ class AI_Tutor_API {
     private $direct_ai;
     
     public function __construct() {
-        // Configure AI backend URL - should be set in WordPress settings
-        $this->ai_backend_url = get_option('ai_tutor_backend_url', '');
+        // Configure AI backend URL using config class
+        $this->ai_backend_url = AI_Tutor_Config::get_backend_url();
         $this->direct_ai = new AI_Tutor_Direct_AI();
     }
     
@@ -335,16 +335,12 @@ class AI_Tutor_API {
      */
     private function call_backend_chat($message, $lesson, $subject, $chat_history) {
         $backend_url = rtrim($this->ai_backend_url, '/');
-        $endpoint = $backend_url . '/api/tutor/chat';
+        $endpoint = $backend_url . '/api/chat';
         
         $payload = array(
             'message' => $message,
-            'lesson' => array(
-                'id' => $lesson->ID,
-                'title' => $lesson->post_title,
-                'content' => $lesson->post_content,
-                'subject' => $subject ? $subject->post_title : 'General'
-            ),
+            'lessonId' => $lesson->ID,
+            'subject' => $subject ? $subject->post_title : 'General',
             'chatHistory' => $chat_history
         );
         
@@ -368,6 +364,41 @@ class AI_Tutor_API {
         }
         
         return $data['response'];
+    }
+    
+    /**
+     * Call backend API for content generation
+     */
+    private function call_backend_generate_content($lesson, $subject) {
+        $backend_url = rtrim($this->ai_backend_url, '/');
+        $endpoint = $backend_url . '/api/lessons/' . $lesson->ID . '/generate';
+        
+        $payload = array(
+            'subject' => $subject ? $subject->post_title : 'General',
+            'topic' => $lesson->post_title,
+            'level' => 'intermediate'
+        );
+        
+        $response = wp_remote_post($endpoint, array(
+            'body' => json_encode($payload),
+            'headers' => array(
+                'Content-Type' => 'application/json'
+            ),
+            'timeout' => 30
+        ));
+        
+        if (is_wp_error($response)) {
+            throw new Exception('Backend API error: ' . $response->get_error_message());
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        if (!$data) {
+            throw new Exception('Invalid backend response');
+        }
+        
+        return $data;
     }
     
     /**
@@ -526,37 +557,7 @@ class AI_Tutor_API {
         }
     }
     
-    /**
-     * Call backend API for content generation
-     */
-    private function call_backend_generate_content($lesson, $subject) {
-        $backend_url = rtrim($this->ai_backend_url, '/');
-        $endpoint = $backend_url . '/api/lessons/generate';
-        
-        $payload = array(
-            'subject' => $subject ? $subject->post_title : 'General',
-            'topic' => $lesson->post_title
-        );
-        
-        $response = wp_remote_post($endpoint, array(
-            'body' => json_encode($payload),
-            'headers' => array('Content-Type' => 'application/json'),
-            'timeout' => 60
-        ));
-        
-        if (is_wp_error($response)) {
-            throw new Exception('Backend API error: ' . $response->get_error_message());
-        }
-        
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-        
-        if (!$data || !isset($data['content'])) {
-            throw new Exception('Invalid backend response for content generation');
-        }
-        
-        return $data['content'];
-    }
+
     
     /**
      * Call backend API for questions generation

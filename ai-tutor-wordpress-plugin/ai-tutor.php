@@ -20,6 +20,7 @@ define('AI_TUTOR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('AI_TUTOR_VERSION', '1.0.1');
 
 // Include required files
+require_once AI_TUTOR_PLUGIN_PATH . 'config.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-ai-tutor.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-database.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-direct-ai.php';
