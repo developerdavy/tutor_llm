@@ -74,20 +74,13 @@ class AITutorRealtime {
         // Wait for DOM to be fully loaded
         jQuery(document).ready(() => {
             // Try multiple selectors for compatibility
-            this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
-            this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
+            this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages, #ai-tutor-chat-messages').first();
+            this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input, #ai-tutor-message-input').first();
+            this.sendButton = jQuery('#send-button, .send-button, .ai-send-button, #ai-tutor-send-button').first();
             
-            // If not found, try after a short delay
-            if (this.messageInput.length === 0) {
-                setTimeout(() => {
-                    this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
-                    this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
-                    
-                    console.log('Chat interface retry:', {
-                        chatContainer: this.chatContainer.length,
-                        messageInput: this.messageInput.length
-                    });
-                }, 500);
+            // If not found, create the interface dynamically
+            if (this.messageInput.length === 0 || this.chatContainer.length === 0) {
+                this.createChatInterface();
             }
             
             // Auto-scroll to bottom
@@ -97,9 +90,43 @@ class AITutorRealtime {
             
             console.log('Chat interface initialized:', {
                 chatContainer: this.chatContainer.length,
-                messageInput: this.messageInput.length
+                messageInput: this.messageInput.length,
+                sendButton: this.sendButton.length
             });
         });
+    }
+    
+    createChatInterface() {
+        // Find a container to add chat interface to
+        const container = jQuery('.ai-tutor-lesson-content, .ai-lesson-container, [data-lesson-id], .entry-content, .content, body').first();
+        
+        if (container.length) {
+            const chatHTML = `
+                <div class="ai-tutor-chat-section" style="margin-top: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: #f9f9f9;">
+                    <h4>Ask the AI Tutor</h4>
+                    <div id="ai-tutor-chat-messages" class="ai-chat-messages" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin: 10px 0; background: white; border-radius: 4px;">
+                        <div class="ai-message" style="margin: 10px 0; padding: 8px; background: #e3f2fd; border-radius: 8px;">
+                            <strong>AI Tutor:</strong> Hello! I'm here to help you learn. Ask me any questions about this lesson!
+                        </div>
+                    </div>
+                    <div class="ai-tutor-input-area" style="display: flex; gap: 10px;">
+                        <input type="text" id="ai-tutor-message-input" class="ai-chat-input" placeholder="Type your question here..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <button id="ai-tutor-send-button" class="ai-send-button button button-primary" type="button">Send</button>
+                    </div>
+                </div>
+            `;
+            
+            container.append(chatHTML);
+            
+            // Re-initialize elements
+            this.chatContainer = jQuery('#ai-tutor-chat-messages');
+            this.messageInput = jQuery('#ai-tutor-message-input');
+            this.sendButton = jQuery('#ai-tutor-send-button');
+            
+            console.log('Chat interface created dynamically');
+        } else {
+            console.log('No suitable container found for chat interface');
+        }
     }
     
     loadChatHistory() {
