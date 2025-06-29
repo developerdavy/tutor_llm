@@ -107,16 +107,36 @@ class AITutorNavigation {
             console.log('Lessons response:', response);
             
             if (response.success && response.data) {
-                // Extract subject and lessons from the response structure
-                const subject = response.data.subject || {
-                    id: subjectId,
-                    title: 'Subject #' + subjectId,
-                    description: 'No description available',
-                    icon: '📚',
-                    difficulty: 'Mixed'
-                };
+                console.log('Raw response data:', response.data);
                 
-                const lessons = response.data.lessons || [];
+                // Check if data structure contains subject and lessons
+                let subject, lessons;
+                
+                if (response.data.subject && response.data.lessons) {
+                    // Structured response with subject and lessons
+                    subject = response.data.subject;
+                    lessons = response.data.lessons;
+                } else if (Array.isArray(response.data)) {
+                    // Array response - might be just lessons
+                    lessons = response.data;
+                    subject = {
+                        id: subjectId,
+                        title: 'Subject #' + subjectId,
+                        description: 'Loading subject details...',
+                        icon: '📚',
+                        difficulty: 'Mixed'
+                    };
+                } else {
+                    // Fallback
+                    subject = response.data || {
+                        id: subjectId,
+                        title: 'Subject #' + subjectId,
+                        description: 'No description available',
+                        icon: '📚',
+                        difficulty: 'Mixed'
+                    };
+                    lessons = [];
+                }
                 
                 console.log('Extracted data:', { subject, lessons });
                 this.renderLessonsPage(subject, lessons);
@@ -158,16 +178,67 @@ class AITutorNavigation {
             this.showLoading('Loading AI-powered lesson...');
             
             const response = await this.callAjax('get_lesson', { lesson_id: lessonId });
+            console.log('Lesson response:', response);
+            
             if (response.success && response.data) {
                 this.selectedLesson = response.data;
                 this.showAILesson(response.data);
             } else {
-                this.showError('Failed to load lesson');
+                console.error('Failed lesson response:', response);
+                // Show fallback lesson interface
+                this.showFallbackLesson(lessonId);
             }
         } catch (error) {
             console.error('Error loading lesson:', error);
-            this.showError('Error loading lesson');
+            this.showFallbackLesson(lessonId);
         }
+    }
+    
+    showFallbackLesson(lessonId) {
+        const html = `
+            <div class="ai-lesson-fallback">
+                <div class="lesson-header">
+                    <div class="navigation-breadcrumb">
+                        <button class="btn btn-link back-to-lessons">
+                            <span class="btn-icon">←</span>
+                            <span class="btn-text">Back to Lessons</span>
+                        </button>
+                        <span class="breadcrumb-separator">></span>
+                        <span class="current-lesson">Lesson #${lessonId}</span>
+                    </div>
+                </div>
+                
+                <div class="lesson-content">
+                    <h2>Lesson ID: ${lessonId}</h2>
+                    <p>This lesson would normally load with full AI-powered content.</p>
+                    
+                    <div class="features-list">
+                        <h3>Available Features:</h3>
+                        <ul>
+                            <li>AI-generated lesson content</li>
+                            <li>Interactive chat with AI tutor</li>
+                            <li>Dynamic question generation</li>
+                            <li>Progress tracking</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="lesson-note">
+                        <p><strong>Note:</strong> Full lesson functionality requires proper WordPress AJAX configuration and backend connectivity.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        jQuery('.ai-tutor-content, #ai-tutor-app').html(html);
+        
+        // Add back navigation
+        jQuery('.back-to-lessons').on('click', () => {
+            if (this.selectedSubject) {
+                this.showSubjectLessons(this.selectedSubject.id);
+            } else {
+                this.showSubjects();
+            }
+        });
     }
     
     renderSubjects(subjects) {

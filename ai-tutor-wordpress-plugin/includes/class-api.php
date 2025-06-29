@@ -25,6 +25,8 @@ class AI_Tutor_API {
         add_action('wp_ajax_nopriv_ai_tutor_get_subjects', array($this, 'ajax_get_subjects'));
         add_action('wp_ajax_ai_tutor_get_subject', array($this, 'ajax_get_subject'));
         add_action('wp_ajax_nopriv_ai_tutor_get_subject', array($this, 'ajax_get_subject'));
+        add_action('wp_ajax_ai_tutor_get_subject_details', array($this, 'ajax_get_subject')); // Alias for compatibility
+        add_action('wp_ajax_nopriv_ai_tutor_get_subject_details', array($this, 'ajax_get_subject'));
         add_action('wp_ajax_ai_tutor_get_subject_lessons', array($this, 'ajax_get_subject_lessons'));
         add_action('wp_ajax_nopriv_ai_tutor_get_subject_lessons', array($this, 'ajax_get_subject_lessons'));
         add_action('wp_ajax_ai_tutor_get_lesson', array($this, 'ajax_get_lesson'));
