@@ -31,9 +31,12 @@ class AITutorNavigation {
     setupEventListeners() {
         // Subject card clicks
         jQuery(document).on('click', '.subject-card', (e) => {
-            e.preventDefault();
-            const subjectId = jQuery(e.currentTarget).data('subject-id');
-            this.selectSubject(subjectId);
+            // Don't trigger if clicking on lesson links, buttons, or interactive elements
+            if (jQuery(e.target).closest('.lesson-link, button, .btn, a').length === 0) {
+                e.preventDefault();
+                const subjectId = jQuery(e.currentTarget).data('subject-id');
+                this.selectSubject(subjectId);
+            }
         });
         
         // Explore subject button
