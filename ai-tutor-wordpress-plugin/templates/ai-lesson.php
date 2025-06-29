@@ -651,7 +651,213 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.generate-content-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const lessonId = this.dataset.lessonId;
-            generateContent(lessonId, 'content');
+            generateLessonContent(lessonId);
+        });
+    });
+    
+    document.querySelectorAll('.generate-questions-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lessonId = this.dataset.lessonId;
+            generateQuestions(lessonId);
+        });
+    });
+    
+    document.querySelectorAll('.generate-examples-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lessonId = this.dataset.lessonId;
+            generateExamples(lessonId);
+        });
+    });
+    
+    function generateLessonContent(lessonId) {
+        showLoading();
+        
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'ai_tutor_generate_content',
+                lesson_id: lessonId,
+                nonce: '<?php echo wp_create_nonce('ai_tutor_generate_content'); ?>'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                displayGeneratedContent(data.data);
+            } else {
+                alert('Failed to generate content: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            alert('Network error: ' + error.message);
+        });
+    }
+    
+    function generateQuestions(lessonId) {
+        showLoading();
+        
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'ai_tutor_generate_questions',
+                lesson_id: lessonId,
+                type: 'multiple_choice',
+                difficulty: 'intermediate',
+                count: 5,
+                nonce: '<?php echo wp_create_nonce('ai_tutor_generate_questions'); ?>'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                displayQuestions(data.data);
+            } else {
+                alert('Failed to generate questions: ' + (data.data || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            alert('Network error: ' + error.message);
+        });
+    }
+    
+    function generateExamples(lessonId) {
+        // This will be part of the content generation
+        generateLessonContent(lessonId);
+    }
+    
+    function displayGeneratedContent(content) {
+        const container = document.getElementById('generated-content');
+        let html = '<div class="content-section">';
+        
+        if (content.content) {
+            html += '<div class="lesson-content-generated">';
+            html += '<h3>📝 Generated Lesson Content</h3>';
+            html += '<div class="content-text">' + content.content + '</div>';
+            html += '</div>';
+        }
+        
+        if (content.examples && content.examples.length > 0) {
+            html += '<div class="examples-section">';
+            html += '<h3>💡 Examples</h3>';
+            content.examples.forEach((example, index) => {
+                html += '<div class="example-item">';
+                html += '<h4>Example ' + (index + 1) + '</h4>';
+                html += '<div class="example-problem"><strong>Problem:</strong> ' + example.problem + '</div>';
+                html += '<div class="example-solution"><strong>Solution:</strong> ' + example.solution + '</div>';
+                html += '<div class="example-explanation"><strong>Explanation:</strong> ' + example.explanation + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        
+        if (content.quiz && content.quiz.length > 0) {
+            html += '<div class="quiz-section">';
+            html += '<h3>🎯 Practice Quiz</h3>';
+            content.quiz.forEach((question, index) => {
+                html += '<div class="quiz-question" data-question-index="' + index + '">';
+                html += '<h4>Question ' + (index + 1) + '</h4>';
+                html += '<p>' + question.question + '</p>';
+                html += '<div class="quiz-options">';
+                question.options.forEach((option, optIndex) => {
+                    html += '<label class="quiz-option">';
+                    html += '<input type="radio" name="question_' + index + '" value="' + optIndex + '">';
+                    html += '<span>' + option + '</span>';
+                    html += '</label>';
+                });
+                html += '</div>';
+                html += '<button class="btn btn-primary check-answer-btn" data-question="' + index + '" data-correct="' + question.correctAnswer + '">Check Answer</button>';
+                html += '<div class="answer-feedback" style="display: none;"></div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+        container.style.display = 'block';
+        
+        // Add event listeners for quiz answers
+        document.querySelectorAll('.check-answer-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                checkQuizAnswer(this);
+            });
+        });
+    }
+    
+    function displayQuestions(questions) {
+        const container = document.getElementById('generated-content');
+        let html = '<div class="questions-section">';
+        html += '<h3>❓ Generated Questions</h3>';
+        
+        questions.forEach((question, index) => {
+            html += '<div class="question-item">';
+            html += '<h4>Question ' + (index + 1) + '</h4>';
+            html += '<p>' + question.question + '</p>';
+            if (question.options) {
+                html += '<div class="question-options">';
+                question.options.forEach((option, optIndex) => {
+                    html += '<div class="option">• ' + option + '</div>';
+                });
+                html += '</div>';
+                html += '<div class="correct-answer"><strong>Correct Answer:</strong> ' + question.options[question.correctAnswer] + '</div>';
+            }
+            if (question.explanation) {
+                html += '<div class="question-explanation"><strong>Explanation:</strong> ' + question.explanation + '</div>';
+            }
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        container.style.display = 'block';
+    }
+    
+    function checkQuizAnswer(button) {
+        const questionIndex = button.dataset.question;
+        const correctAnswer = parseInt(button.dataset.correct);
+        const selectedInput = document.querySelector('input[name="question_' + questionIndex + '"]:checked');
+        
+        if (!selectedInput) {
+            alert('Please select an answer first.');
+            return;
+        }
+        
+        const selectedAnswer = parseInt(selectedInput.value);
+        const feedbackDiv = button.parentElement.querySelector('.answer-feedback');
+        
+        if (selectedAnswer === correctAnswer) {
+            feedbackDiv.innerHTML = '<div class="feedback-correct">✅ Correct! Well done!</div>';
+            feedbackDiv.className = 'answer-feedback correct';
+        } else {
+            feedbackDiv.innerHTML = '<div class="feedback-incorrect">❌ Incorrect. The correct answer is option ' + (correctAnswer + 1) + '.</div>';
+            feedbackDiv.className = 'answer-feedback incorrect';
+        }
+        
+        feedbackDiv.style.display = 'block';
+        button.disabled = true;
+        button.textContent = 'Answered';
+        
+        // Save lesson progress
+        localStorage.setItem('ai_tutor_last_lesson', lessonId);
+    }
+    
+    function showLoading() {
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    function hideLoading() {
+        loadingOverlay.style.display = 'none';
+    }enerateContent(lessonId, 'content');
         });
     });
 

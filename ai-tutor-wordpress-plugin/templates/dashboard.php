@@ -83,100 +83,26 @@ if ($user_id) {
 
     <!-- Main Content -->
     <div class="dashboard-content">
-        <!-- Subjects Grid -->
-        <div class="subjects-section">
-            <h2 class="section-title">📚 Available Subjects</h2>
-            
-            <?php if (empty($subjects)): ?>
-                <div class="empty-state">
-                    <div class="empty-icon">📖</div>
-                    <h3>No Subjects Available</h3>
-                    <p>Subjects will appear here once they are created by an administrator.</p>
-                </div>
-            <?php else: ?>
-                <div class="subjects-grid">
-                    <?php foreach ($subjects as $subject): ?>
-                        <?php
-                        $subject_id = $subject->ID;
-                        $subject_progress = isset($user_progress[$subject_id]) ? $user_progress[$subject_id] : null;
-                        $progress_percentage = 0;
-                        
-                        if ($subject_progress && $subject_progress->total_lessons > 0) {
-                            $progress_percentage = ($subject_progress->completed_lessons / $subject_progress->total_lessons) * 100;
-                        }
-                        
-                        // Get lessons count
-                        $lessons_count = wp_count_posts('ai_lesson')->publish ?? 0;
-                        $subject_lessons = get_posts(array(
-                            'post_type' => 'ai_lesson',
-                            'meta_query' => array(
-                                'relation' => 'OR',
-                                array(
-                                    'key' => '_ai_lesson_subject',
-                                    'value' => $subject_id,
-                                    'compare' => '='
-                                ),
-                                array(
-                                    'key' => '_ai_lesson_subject_id',
-                                    'value' => $subject_id,
-                                    'compare' => '='
-                                )
-                            ),
-                            'post_status' => 'publish',
-                            'numberposts' => -1
-                        ));
-                        $lessons_count = count($subject_lessons);
-                        
-                        // Get subject metadata
-                        $subject_color = get_post_meta($subject_id, '_ai_subject_color', true) ?: '#007cba';
-                        $subject_icon = get_post_meta($subject_id, '_ai_subject_icon', true) ?: '📚';
-                        ?>
-                        
-                        <div class="subject-card" data-subject-id="<?php echo esc_attr($subject_id); ?>">
-                            <div class="subject-header" style="background-color: <?php echo esc_attr($subject_color); ?>;">
-                                <div class="subject-icon"><?php echo esc_html($subject_icon); ?></div>
-                                <h3 class="subject-title"><?php echo esc_html($subject->post_title); ?></h3>
-                            </div>
-                            
-                            <div class="subject-body">
-                                <p class="subject-description"><?php echo esc_html($subject->post_content); ?></p>
-                                
-                                <div class="subject-stats">
-                                    <div class="stat">
-                                        <span class="stat-label">Lessons:</span>
-                                        <span class="stat-value"><?php echo $lessons_count; ?></span>
-                                    </div>
-                                    <?php if ($subject_progress): ?>
-                                        <div class="stat">
-                                            <span class="stat-label">Completed:</span>
-                                            <span class="stat-value"><?php echo $subject_progress->completed_lessons; ?>/<?php echo $subject_progress->total_lessons; ?></span>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <?php if ($progress_percentage > 0): ?>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: <?php echo $progress_percentage; ?>%; background-color: <?php echo esc_attr($subject_color); ?>;"></div>
-                                    </div>
-                                    <div class="progress-text"><?php echo round($progress_percentage); ?>% Complete</div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="subject-actions">
-                                <?php if ($lessons_count > 0): ?>
-                                    <button class="btn btn-primary view-lessons-btn" data-subject-id="<?php echo esc_attr($subject_id); ?>">
-                                        <?php echo $progress_percentage > 0 ? 'Continue Learning' : 'Start Learning'; ?>
-                                    </button>
-                                <?php else: ?>
-                                    <button class="btn btn-secondary" disabled>
-                                        No Lessons Available
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+            <h2 class="section-title">🚀 Quick Actions</h2>
+            <div class="quick-actions-grid">
+                <a href="#" class="action-card" onclick="loadSubjects()">
+                    <div class="action-icon">📚</div>
+                    <h3>Browse Subjects</h3>
+                    <p>Explore available learning topics</p>
+                </a>
+                <a href="#" class="action-card" onclick="continueLastLesson()">
+                    <div class="action-icon">📖</div>
+                    <h3>Continue Learning</h3>
+                    <p>Resume your last lesson</p>
+                </a>
+                <a href="#" class="action-card" onclick="viewProgress()">
+                    <div class="action-icon">📊</div>
+                    <h3>View Progress</h3>
+                    <p>Check your learning statistics</p>
+                </a>
+            </div>
         </div>
 
         <!-- Recent Activity (if user is logged in) -->
