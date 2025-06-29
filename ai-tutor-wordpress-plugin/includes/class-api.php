@@ -18,6 +18,7 @@ class AI_Tutor_API {
         add_action('wp_ajax_nopriv_ai_tutor_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_ai_tutor_generate_content', array($this, 'generate_lesson_content'));
         add_action('wp_ajax_ai_tutor_generate_questions', array($this, 'generate_questions'));
+        add_action('wp_ajax_ai_tutor_generate_examples', array($this, 'generate_examples'));
         add_action('wp_ajax_ai_tutor_evaluate_answer', array($this, 'evaluate_answer'));
         
         // Navigation endpoints
@@ -323,7 +324,10 @@ class AI_Tutor_API {
         }
         
         // Use direct AI as fallback
-        return $this->direct_ai->generate_tutor_response($message, $lesson, $subject, $chat_history);
+        $subject_name = $subject ? $subject->post_title : 'General';
+        $lesson_title = $lesson ? $lesson->post_title : '';
+        $lesson_content = $lesson ? $lesson->post_content : '';
+        return $this->direct_ai->generate_tutor_response($message, $subject_name, $lesson_title, $lesson_content);
     }
     
     /**
@@ -395,7 +399,8 @@ class AI_Tutor_API {
             if (!empty($this->ai_backend_url)) {
                 $content = $this->call_backend_generate_content($lesson, $subject);
             } else {
-                $content = $this->direct_ai->generate_lesson_content($lesson, $subject);
+                $subject_name = $subject ? $subject->post_title : 'General';
+                $content = $this->direct_ai->generate_lesson_content($subject_name, $lesson->post_title, 'high school');
             }
             
             wp_send_json_success($content);
@@ -437,13 +442,54 @@ class AI_Tutor_API {
             if (!empty($this->ai_backend_url)) {
                 $questions = $this->call_backend_generate_questions($lesson, $subject, $question_type, $difficulty, $count);
             } else {
-                $questions = $this->direct_ai->generate_questions($lesson, $subject, $question_type, $difficulty, $count);
+                $subject_name = $subject ? $subject->post_title : 'General';
+                $questions = $this->direct_ai->generate_questions($subject_name, $lesson->post_title, $lesson->post_content, $question_type, $difficulty, $count);
             }
             
             wp_send_json_success($questions);
         } catch (Exception $e) {
             error_log('Questions generation error: ' . $e->getMessage());
             wp_send_json_error('Failed to generate questions. Please try again.');
+        }
+    }
+    
+    /**
+     * Generate examples using AI
+     */
+    public function generate_examples() {
+        if (!wp_verify_nonce($_POST['nonce'], 'ai_tutor_generate_examples')) {
+            wp_send_json_error('Invalid nonce');
+            return;
+        }
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error('User not logged in');
+            return;
+        }
+        
+        $lesson_id = intval($_POST['lesson_id']);
+        $count = min(intval($_POST['count'] ?? 3), 5); // Max 5 examples
+        
+        $lesson = get_post($lesson_id);
+        if (!$lesson) {
+            wp_send_json_error('Lesson not found');
+            return;
+        }
+        
+        $subject_id = get_post_meta($lesson_id, '_ai_lesson_subject', true);
+        $subject = get_post($subject_id);
+        
+        try {
+            $subject_name = $subject ? $subject->post_title : 'General';
+            // Generate examples using the lesson content generation method and extract examples
+            $content = $this->direct_ai->generate_lesson_content($subject_name, $lesson->post_title, 'high school');
+            
+            $examples = isset($content['examples']) ? $content['examples'] : array();
+            
+            wp_send_json_success(array('examples' => $examples));
+        } catch (Exception $e) {
+            error_log('Examples generation error: ' . $e->getMessage());
+            wp_send_json_error('Failed to generate examples. Please try again.');
         }
     }
     
@@ -461,22 +507,16 @@ class AI_Tutor_API {
             return;
         }
         
-        $lesson_id = intval($_POST['lesson_id']);
         $question = sanitize_text_field($_POST['question']);
-        $answer = sanitize_text_field($_POST['answer']);
+        $user_answer = sanitize_text_field($_POST['user_answer']);
         $correct_answer = sanitize_text_field($_POST['correct_answer'] ?? '');
-        
-        $lesson = get_post($lesson_id);
-        if (!$lesson) {
-            wp_send_json_error('Lesson not found');
-            return;
-        }
+        $subject = sanitize_text_field($_POST['subject'] ?? 'General');
         
         try {
             if (!empty($this->ai_backend_url)) {
-                $evaluation = $this->call_backend_evaluate_answer($lesson, $question, $answer, $correct_answer);
+                $evaluation = $this->call_backend_evaluate_answer($question, $user_answer, $correct_answer, $subject);
             } else {
-                $evaluation = $this->direct_ai->evaluate_answer($lesson, $question, $answer, $correct_answer);
+                $evaluation = $this->direct_ai->evaluate_answer($question, $user_answer, $correct_answer, $subject);
             }
             
             wp_send_json_success($evaluation);

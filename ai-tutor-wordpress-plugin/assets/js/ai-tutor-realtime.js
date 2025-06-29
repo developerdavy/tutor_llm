@@ -71,18 +71,34 @@ class AITutorRealtime {
     }
     
     initializeChatInterface() {
-        // Try multiple selectors for compatibility
-        this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
-        this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
-        
-        // Auto-scroll to bottom
-        if (this.chatContainer.length) {
-            this.scrollToBottom();
-        }
-        
-        console.log('Chat interface initialized:', {
-            chatContainer: this.chatContainer.length,
-            messageInput: this.messageInput.length
+        // Wait for DOM to be fully loaded
+        jQuery(document).ready(() => {
+            // Try multiple selectors for compatibility
+            this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
+            this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
+            
+            // If not found, try after a short delay
+            if (this.messageInput.length === 0) {
+                setTimeout(() => {
+                    this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
+                    this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
+                    
+                    console.log('Chat interface retry:', {
+                        chatContainer: this.chatContainer.length,
+                        messageInput: this.messageInput.length
+                    });
+                }, 500);
+            }
+            
+            // Auto-scroll to bottom
+            if (this.chatContainer.length) {
+                this.scrollToBottom();
+            }
+            
+            console.log('Chat interface initialized:', {
+                chatContainer: this.chatContainer.length,
+                messageInput: this.messageInput.length
+            });
         });
     }
     
@@ -99,13 +115,22 @@ class AITutorRealtime {
     }
     
     async sendMessage() {
-        if (!this.messageInput || !this.chatContainer) {
+        if (!this.messageInput || !this.chatContainer || this.messageInput.length === 0) {
             console.error('Chat interface not properly initialized');
             this.initializeChatInterface();
+            if (!this.messageInput || this.messageInput.length === 0) {
+                console.error('Still cannot find message input');
+                return;
+            }
+        }
+        
+        const messageValue = this.messageInput.val();
+        if (!messageValue) {
+            console.error('Message input value is undefined');
             return;
         }
         
-        const message = this.messageInput.val().trim();
+        const message = messageValue.trim();
         if (!message || this.isTyping) return;
         
         const lessonId = this.getCurrentLessonId();
