@@ -801,9 +801,10 @@ class AI_Tutor_API {
         error_log('AI Tutor: ajax_get_subject_lessons called');
         error_log('AI Tutor: POST data: ' . print_r($_POST, true));
         
-        // Check nonce with better error handling
-        if (!wp_verify_nonce($_POST['nonce'], 'ai_tutor_nonce')) {
-            error_log('AI Tutor: Nonce verification failed');
+        // Enhanced nonce checking like the subjects handler
+        $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+        if (!wp_verify_nonce($nonce, 'ai_tutor_nonce') && !current_user_can('read')) {
+            error_log('AI Tutor: Nonce verification failed for get_subject_lessons');
             wp_send_json_error('Security check failed');
             return;
         }

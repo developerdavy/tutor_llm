@@ -98,16 +98,57 @@ class AITutorNavigation {
     }
     
     async showSubjectLessons(subjectId) {
+        this.showLoading('Loading lessons...');
+        
         try {
+            // The backend returns both subject and lessons data in one call
             const response = await this.callAjax('get_subject_lessons', { subject_id: subjectId });
+            
+            console.log('Lessons response:', response);
+            
             if (response.success && response.data) {
-                this.renderLessonsPage(response.data.subject, response.data.lessons);
+                // Extract subject and lessons from the response structure
+                const subject = response.data.subject || {
+                    id: subjectId,
+                    title: 'Subject #' + subjectId,
+                    description: 'No description available',
+                    icon: '📚',
+                    difficulty: 'Mixed'
+                };
+                
+                const lessons = response.data.lessons || [];
+                
+                console.log('Extracted data:', { subject, lessons });
+                this.renderLessonsPage(subject, lessons);
             } else {
-                this.showError('Failed to load lessons');
+                console.error('Failed response:', response);
+                
+                // Create fallback data
+                const fallbackSubject = {
+                    id: subjectId,
+                    title: 'Subject #' + subjectId,
+                    description: 'Unable to load subject information',
+                    icon: '📚',
+                    difficulty: 'Mixed'
+                };
+                
+                this.renderLessonsPage(fallbackSubject, []);
+                this.showError('Failed to load lessons data');
             }
         } catch (error) {
             console.error('Error loading lessons:', error);
-            this.showError('Error loading lessons');
+            
+            // Create error fallback
+            const errorSubject = {
+                id: subjectId,
+                title: 'Subject #' + subjectId,
+                description: 'Error: ' + error.message,
+                icon: '⚠️',
+                difficulty: 'Unknown'
+            };
+            
+            this.renderLessonsPage(errorSubject, []);
+            this.showError('Error loading lessons: ' + error.message);
         }
     }
     
@@ -206,8 +247,20 @@ class AITutorNavigation {
     }
     
     renderLessonsPage(subject, lessons) {
+        // Ensure we have valid objects with fallbacks
+        const safeSubject = subject || {
+            title: 'Unknown Subject',
+            description: 'Loading subject information...',
+            icon: '📚',
+            difficulty: 'Mixed'
+        };
+        
+        const safeLessons = Array.isArray(lessons) ? lessons : [];
+        
         this.currentPage = 'lessons';
-        this.selectedSubject = subject;
+        this.selectedSubject = safeSubject;
+        
+        console.log('Rendering lessons page with:', { safeSubject, safeLessons });
         
         const html = `
             <div class="ai-tutor-lessons">
@@ -218,24 +271,27 @@ class AITutorNavigation {
                             <span class="btn-text">Back to Subjects</span>
                         </button>
                         <span class="breadcrumb-separator">></span>
-                        <span class="current-subject">${subject.title}</span>
+                        <span class="current-subject">${safeSubject.title || 'Unknown Subject'}</span>
                     </div>
                     
                     <div class="subject-info">
-                        <div class="subject-icon-large">${subject.icon || '📚'}</div>
+                        <div class="subject-icon-large">${safeSubject.icon || '📚'}</div>
                         <div class="subject-details">
-                            <h2 class="subject-title">${subject.title}</h2>
-                            <p class="subject-description">${subject.description || ''}</p>
+                            <h2 class="subject-title">${safeSubject.title || 'Unknown Subject'}</h2>
+                            <p class="subject-description">${safeSubject.description || 'No description available'}</p>
                             <div class="subject-stats">
-                                <span class="stat-item">${lessons.length} Lessons</span>
-                                <span class="stat-item">${subject.difficulty || 'Mixed'} Level</span>
+                                <span class="stat-item">${safeLessons.length} Lessons</span>
+                                <span class="stat-item">${safeSubject.difficulty || 'Mixed'} Level</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="lessons-grid">
-                    ${lessons.map(lesson => this.createLessonCard(lesson)).join('')}
+                    ${safeLessons.length > 0 
+                        ? safeLessons.map(lesson => this.createLessonCard(lesson)).join('')
+                        : '<div class="no-lessons-message"><p>No lessons available for this subject yet.</p></div>'
+                    }
                 </div>
             </div>
         `;
