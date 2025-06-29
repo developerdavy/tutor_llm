@@ -210,6 +210,7 @@ class AITutorNavigation {
             
             if (response.success && response.data) {
                 this.selectedLesson = response.data;
+                console.log('About to show AI lesson with data:', response.data);
                 this.showAILesson(response.data);
             } else {
                 console.error('Failed lesson response:', response);
@@ -427,16 +428,12 @@ class AITutorNavigation {
     }
     
     showAILesson(lesson) {
+        console.log('showAILesson called with:', lesson);
         this.currentPage = 'lesson';
         this.selectedLesson = lesson;
         
-        // Redirect to the AI lesson shortcode or create the lesson interface
-        const aiLessonUrl = this.createAILessonUrl(lesson.id);
-        if (aiLessonUrl) {
-            window.location.href = aiLessonUrl;
-        } else {
-            this.createAILessonInterface(lesson);
-        }
+        // Display lesson interface directly instead of redirecting
+        this.createAILessonInterface(lesson);
     }
     
     createAILessonUrl(lessonId) {
@@ -497,7 +494,24 @@ class AITutorNavigation {
             </div>
         `;
         
-        jQuery('.ai-tutor-content, #ai-tutor-app').html(html);
+        // Find the best container to replace content
+        const targetContainer = jQuery('.ai-tutor-content, #ai-tutor-app, .ai-tutor-subjects').first();
+        if (targetContainer.length) {
+            console.log('Replacing content in container:', targetContainer[0]);
+            targetContainer.html(html);
+        } else {
+            console.log('No suitable container found, replacing body content');
+            jQuery('body').html(html);
+        }
+        
+        // Add back navigation handler
+        jQuery('.back-to-lessons').on('click', () => {
+            if (this.selectedSubject) {
+                this.showSubjectLessons(this.selectedSubject.id);
+            } else {
+                this.showSubjects();
+            }
+        });
         
         // Initialize the AI chat for this lesson
         if (window.AITutorRealtime) {
