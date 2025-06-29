@@ -8,14 +8,14 @@ This is a full-stack AI-powered tutoring platform that combines:
 - **Database**: PostgreSQL with Drizzle ORM
 
 ## Recent Changes
-- **2024-12-24**: Successfully migrated from Replit Agent to standard Replit environment
-- **2024-12-24**: Updated WordPress plugin to use real AI instead of static JavaScript responses
-- **2024-12-24**: Added AI-powered content generation, chat, and question generation features
-- **2024-12-24**: Created new backend API endpoints for WordPress integration
-- **2024-12-24**: Added comprehensive AI tutoring capabilities with context-aware responses
-- **2024-12-24**: Fixed WordPress plugin navigation issues and template errors
-- **2024-12-24**: Added sample data creation system for immediate plugin functionality
-- **2024-12-24**: Enhanced plugin with proper lesson-subject relationships and admin tools
+- **2025-06-29**: Successfully migrated from Replit Agent to standard Replit environment
+- **2025-06-29**: Fixed WordPress plugin file error (removed missing fix-lesson-links.php)
+- **2025-06-29**: Created complete navigation system for subjects → lessons → AI content
+- **2025-06-29**: Added AJAX endpoints for seamless subject and lesson browsing
+- **2025-06-29**: Implemented AI-powered lesson interface with conversational chat
+- **2025-06-29**: Fixed frontend lesson loading error by correcting query key format
+- **2025-06-29**: Enhanced CSS styling for complete AI tutoring flow navigation
+- **2025-06-29**: Backend server running successfully with database connected and sample data
 
 ## Project Architecture
 

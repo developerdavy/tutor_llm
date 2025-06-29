@@ -27,14 +27,9 @@ export default function Dashboard() {
     queryKey: ["/api/subjects"],
   });
 
-  const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
-    queryKey: [`/api/subjects/${selectedSubject?.id}/lessons`, selectedSubject?.id],
-    enabled: !!selectedSubject,
-    gcTime: 0,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: false,
-    networkMode: "always",
+  const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useQuery<Lesson[]>({
+    queryKey: [`/api/subjects/${selectedSubject?.id}/lessons`],
+    enabled: !!selectedSubject?.id,
   });
 
   const { data: userProgress, isLoading: progressLoading } = useQuery({
@@ -57,15 +52,7 @@ export default function Dashboard() {
 
   const handleSubjectSelect = (subject: Subject) => {
     setSelectedLesson(null);
-    setSelectedSubject(null); // Clear first to force re-render
-    
-    // Clear all queries completely
-    queryClient.clear();
-    
-    // Set the new subject after a brief delay to ensure cache is cleared
-    setTimeout(() => {
-      setSelectedSubject(subject);
-    }, 100);
+    setSelectedSubject(subject);
   };
 
   const handleLessonSelect = (lesson: Lesson) => {
@@ -165,6 +152,20 @@ export default function Dashboard() {
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-edu-blue"></div>
                         <p className="ml-2 text-sm text-gray-600">Loading {selectedSubject?.name} lessons...</p>
+                      </div>
+                    ) : lessonsError ? (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
+                        <p className="text-red-600 text-sm mb-2">Error loading lessons</p>
+                        <p className="text-xs text-gray-500">{(lessonsError as Error).message}</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/subjects/${selectedSubject?.id}/lessons`] })}
+                          className="mt-2"
+                        >
+                          Try Again
+                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
