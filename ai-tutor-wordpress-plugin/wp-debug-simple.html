@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WordPress AJAX Debug Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>WordPress AJAX Debug Test</h1>
+    <p>Place this file in your WordPress root directory and access it via browser.</p>
+    
+    <div id="debug-results"></div>
+    
+    <h3>Step 1: Test Basic WordPress AJAX</h3>
+    <button onclick="testBasicAjax()">Test Basic AJAX</button>
+    
+    <h3>Step 2: Test AI Tutor AJAX</h3>
+    <button onclick="testAITutorAjax()">Test AI Tutor AJAX</button>
+    
+    <h3>Debug Information</h3>
+    <div id="debug-info">
+        <p>Loading debug information...</p>
+    </div>
+
+    <script>
+    // Configuration - Update these URLs to match your WordPress installation
+    const wpUrl = window.location.origin + '/wordpress';  // Adjust if needed
+    const ajaxUrl = wpUrl + '/wp-admin/admin-ajax.php';
+    
+    // Display current configuration
+    document.getElementById('debug-info').innerHTML = `
+        <p><strong>Detected WordPress URL:</strong> ${wpUrl}</p>
+        <p><strong>AJAX URL:</strong> ${ajaxUrl}</p>
+        <p><strong>Current Page URL:</strong> ${window.location.href}</p>
+        <p><em>If the WordPress URL is incorrect, update the wpUrl variable in this file.</em></p>
+    `;
+    
+    function testBasicAjax() {
+        updateResults('Testing basic WordPress AJAX...');
+        
+        // Test if admin-ajax.php is accessible
+        fetch(ajaxUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=heartbeat&_wpnonce=test'
+        })
+        .then(response => {
+            updateResults(`
+                <h4>Basic AJAX Test Results:</h4>
+                <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                <p><strong>URL:</strong> ${ajaxUrl}</p>
+                ${response.status === 400 ? 
+                    '<p style="color: red;">❌ 400 Error - This indicates the AJAX endpoint is accessible but rejecting the request</p>' :
+                    response.status === 200 ? 
+                        '<p style="color: green;">✅ AJAX endpoint is working</p>' :
+                        `<p style="color: orange;">⚠️ Unexpected status: ${response.status}</p>`
+                }
+            `);
+            return response.text();
+        })
+        .then(text => {
+            updateResults(document.getElementById('debug-results').innerHTML + `
+                <p><strong>Response:</strong></p>
+                <pre style="background: #f5f5f5; padding: 10px; max-height: 200px; overflow-y: auto;">${text}</pre>
+            `);
+        })
+        .catch(error => {
+            updateResults(`
+                <h4>Basic AJAX Test Results:</h4>
+                <p style="color: red;">❌ Network Error: ${error.message}</p>
+                <p>This suggests the WordPress URL or AJAX endpoint is not accessible.</p>
+            `);
+        });
+    }
+    
+    function testAITutorAjax() {
+        updateResults('Testing AI Tutor AJAX...');
+        
+        // Test AI Tutor specific action
+        fetch(ajaxUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=ai_tutor_get_subjects&nonce=test123'
+        })
+        .then(response => {
+            updateResults(`
+                <h4>AI Tutor AJAX Test Results:</h4>
+                <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                ${response.status === 400 ? 
+                    '<p style="color: red;">❌ 400 Error - Likely nonce validation failure or missing action handler</p>' :
+                    response.status === 200 ? 
+                        '<p style="color: green;">✅ AI Tutor AJAX is working</p>' :
+                        `<p style="color: orange;">⚠️ Status: ${response.status}</p>`
+                }
+            `);
+            return response.text();
+        })
+        .then(text => {
+            updateResults(document.getElementById('debug-results').innerHTML + `
+                <p><strong>AI Tutor Response:</strong></p>
+                <pre style="background: #f5f5f5; padding: 10px; max-height: 200px; overflow-y: auto;">${text}</pre>
+                <h4>Next Steps:</h4>
+                <ul>
+                    <li>If you see "Security check failed" - nonce issue</li>
+                    <li>If you see "0" response - action not registered</li>
+                    <li>If you see HTML - WordPress error page</li>
+                    <li>If you see JSON error - check plugin activation</li>
+                </ul>
+            `);
+        })
+        .catch(error => {
+            updateResults(`
+                <h4>AI Tutor AJAX Test Results:</h4>
+                <p style="color: red;">❌ Network Error: ${error.message}</p>
+            `);
+        });
+    }
+    
+    function updateResults(html) {
+        document.getElementById('debug-results').innerHTML = html;
+    }
+    
+    // Auto-run basic test on page load
+    setTimeout(testBasicAjax, 1000);
+    </script>
+    
+    <hr>
+    <h3>Manual Debugging Steps</h3>
+    <ol>
+        <li><strong>Check WordPress URL:</strong> Ensure the wpUrl variable above matches your WordPress installation path</li>
+        <li><strong>Verify Plugin:</strong> Go to WordPress Admin → Plugins and ensure "AI Tutor" is activated</li>
+        <li><strong>Check Permissions:</strong> Ensure WordPress files are readable by web server</li>
+        <li><strong>Review Logs:</strong> Check WordPress error logs for detailed error messages</li>
+        <li><strong>Test Direct Access:</strong> Try accessing ${ajaxUrl} directly in browser</li>
+    </ol>
+    
+    <h3>Common 400 Error Causes</h3>
+    <ul>
+        <li><strong>Invalid Nonce:</strong> Security token expired or malformed</li>
+        <li><strong>Missing Action:</strong> WordPress action not registered properly</li>
+        <li><strong>Plugin Inactive:</strong> AI Tutor plugin not activated</li>
+        <li><strong>Permissions:</strong> User lacks required permissions</li>
+        <li><strong>Malformed Request:</strong> Incorrect POST data format</li>
+    </ul>
+</body>
+</html>

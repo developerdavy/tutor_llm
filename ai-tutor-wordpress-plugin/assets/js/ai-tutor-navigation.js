@@ -397,13 +397,47 @@ class AITutorNavigation {
                 },
                 success: resolve,
                 error: function(xhr, status, error) {
-                    console.error('AJAX Error:', {
+                    const errorDetails = {
                         url: this.url,
-                        status: status,
+                        status: xhr.status,
+                        statusText: xhr.statusText,
                         error: error,
-                        response: xhr.responseText
-                    });
-                    reject(new Error(`AJAX failed: ${status} - ${error}`));
+                        response: xhr.responseText,
+                        readyState: xhr.readyState
+                    };
+                    
+                    console.error('=== AI TUTOR AJAX ERROR DEBUG ===');
+                    console.error('Full Error Details:', errorDetails);
+                    console.error('WordPress AJAX URL:', this.url);
+                    console.error('Action:', `ai_tutor_${action}`);
+                    console.error('Data sent:', data);
+                    
+                    // Provide specific guidance based on error type
+                    if (xhr.status === 400) {
+                        console.error('🔍 400 BAD REQUEST DEBUGGING:');
+                        console.error('1. Check if AI Tutor plugin is activated in WordPress');
+                        console.error('2. Verify WordPress AJAX URL is correct');
+                        console.error('3. Check browser network tab for detailed response');
+                        console.error('4. Response content:', xhr.responseText);
+                        
+                        if (xhr.responseText.includes('0')) {
+                            console.error('❌ WordPress returned "0" - Action not found or nonce failed');
+                        } else if (xhr.responseText.includes('Security check failed')) {
+                            console.error('❌ Nonce validation failed - try refreshing page');
+                        } else if (xhr.responseText.includes('<!DOCTYPE')) {
+                            console.error('❌ WordPress returned HTML page instead of JSON - check plugin activation');
+                        }
+                    } else if (xhr.status === 404) {
+                        console.error('🔍 404 NOT FOUND: WordPress admin-ajax.php not accessible');
+                        console.error('Check if WordPress URL is correct:', this.url);
+                    } else if (xhr.status === 0) {
+                        console.error('🔍 NETWORK ERROR: Cannot reach WordPress');
+                        console.error('Check if WordPress is running and accessible');
+                    }
+                    
+                    console.error('=== END DEBUG INFO ===');
+                    
+                    reject(new Error(`AJAX failed: ${xhr.status} ${xhr.statusText} - ${error}`));
                 }
             });
         });
