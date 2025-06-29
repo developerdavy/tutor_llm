@@ -176,6 +176,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Tutor Chat endpoint
+  app.post("/api/tutor/chat", async (req, res) => {
+    try {
+      const { message, lesson, chatHistory } = req.body;
+      
+      if (!message || !lesson) {
+        return res.status(400).json({ message: "Message and lesson are required" });
+      }
+
+      const response = await generateTutorResponse(
+        message,
+        lesson.subject || "General",
+        chatHistory || []
+      );
+
+      res.json({ response });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate AI response",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Generate questions endpoint
+  app.post("/api/questions/generate", async (req, res) => {
+    try {
+      const { subject, topic, type, difficulty, count } = req.body;
+      
+      const questions = await generateQuestions(
+        subject || "General",
+        topic || "General Topic",
+        count || 5
+      );
+
+      res.json({ questions });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate questions",
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Evaluate answer endpoint
+  app.post("/api/answers/evaluate", async (req, res) => {
+    try {
+      const { question, answer, correctAnswer, context } = req.body;
+      
+      if (!question || !answer) {
+        return res.status(400).json({ message: "Question and answer are required" });
+      }
+
+      const evaluation = await evaluateAnswer(
+        question,
+        answer,
+        correctAnswer || "",
+        context || "General"
+      );
+
+      res.json({ evaluation });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to evaluate answer",
+        error: (error as Error).message 
+      });
+    }
+  });
+
   // Get user progress
   app.get("/api/users/:userId/progress", authenticateToken, async (req: AuthRequest, res) => {
     try {
