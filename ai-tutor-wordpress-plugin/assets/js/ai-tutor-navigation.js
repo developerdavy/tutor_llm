@@ -5,6 +5,12 @@
 
 class AITutorNavigation {
     constructor() {
+        // Ensure WordPress AJAX variables are available
+        if (typeof aiTutorAjax === 'undefined') {
+            console.error('AI Tutor: WordPress AJAX variables not available. Please ensure this script is loaded in a WordPress environment.');
+            return;
+        }
+        
         this.apiUrl = aiTutorAjax.ajaxurl;
         this.nonce = aiTutorAjax.nonce;
         this.currentPage = 'subjects';
