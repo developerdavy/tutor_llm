@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import Layout from "@/components/layout";
 import AvatarDisplay from "@/components/avatar-display";
 import SubjectCard from "@/components/subject-card";
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [location] = useLocation();
+  const params = useParams();
 
   const { data: subjects, isLoading: subjectsLoading } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
@@ -30,6 +31,26 @@ export default function Dashboard() {
   const { data: lessons, isLoading: lessonsLoading, error: lessonsError } = useQuery<Lesson[]>({
     queryKey: [`/api/subjects/${selectedSubject?.id}/lessons`],
     enabled: !!selectedSubject?.id,
+    queryFn: async () => {
+      if (!selectedSubject?.id) return [];
+      
+      try {
+        const response = await fetch(`/api/subjects/${selectedSubject.id}/lessons`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Lessons loaded successfully:', data);
+        return data;
+      } catch (error) {
+        console.error('Failed to load lessons for subject', selectedSubject.id, ':', error);
+        throw new Error(`Failed to load lessons: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    },
+    retry: 1,
+    staleTime: 10000,
   });
 
   const { data: userProgress, isLoading: progressLoading } = useQuery({
@@ -37,8 +58,18 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
-  // Handle URL parameters for subject selection
+  // Handle URL parameters for lesson/subject selection
   useEffect(() => {
+    // Handle lesson route /lessons/:id
+    if (params.id && lessons) {
+      const lessonId = parseInt(params.id);
+      const lesson = lessons.find(l => l.id === lessonId);
+      if (lesson) {
+        setSelectedLesson(lesson);
+      }
+    }
+    
+    // Handle subject parameter
     const urlParams = new URLSearchParams(location.split('?')[1] || '');
     const subjectId = urlParams.get('subject');
     
@@ -48,7 +79,7 @@ export default function Dashboard() {
         handleSubjectSelect(subject);
       }
     }
-  }, [location, subjects]);
+  }, [location, subjects, lessons, params.id]);
 
   const handleSubjectSelect = (subject: Subject) => {
     setSelectedLesson(null);
@@ -158,6 +189,7 @@ export default function Dashboard() {
                         <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
                         <p className="text-red-600 text-sm mb-2">Error loading lessons</p>
                         <p className="text-xs text-gray-500">{(lessonsError as Error).message}</p>
+                        <p className="text-xs text-gray-400 mt-1">Query: /api/subjects/{selectedSubject?.id}/lessons</p>
                         <Button 
                           size="sm" 
                           variant="outline" 
