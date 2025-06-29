@@ -26,7 +26,7 @@ require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-ai-direct.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-api.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-shortcodes.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'create-sample-data.php';
-require_once AI_TUTOR_PLUGIN_PATH . 'fix-lesson-links.php';
+
 require_once AI_TUTOR_PLUGIN_PATH . 'admin/ai-settings-page.php';
 
 // Initialize the plugin

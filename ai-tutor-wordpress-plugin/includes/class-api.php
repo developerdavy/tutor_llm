@@ -13,12 +13,25 @@ class AI_Tutor_API {
     
     public function init() {
         add_action('rest_api_init', array($this, 'register_routes'));
+        // Chat and content generation
         add_action('wp_ajax_ai_tutor_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_nopriv_ai_tutor_chat', array($this, 'handle_chat'));
-        add_action('wp_ajax_ai_tutor_progress', array($this, 'update_progress'));
         add_action('wp_ajax_ai_tutor_generate_content', array($this, 'generate_lesson_content'));
         add_action('wp_ajax_ai_tutor_generate_questions', array($this, 'generate_questions'));
         add_action('wp_ajax_ai_tutor_evaluate_answer', array($this, 'evaluate_answer'));
+        
+        // Navigation endpoints
+        add_action('wp_ajax_ai_tutor_get_subjects', array($this, 'ajax_get_subjects'));
+        add_action('wp_ajax_nopriv_ai_tutor_get_subjects', array($this, 'ajax_get_subjects'));
+        add_action('wp_ajax_ai_tutor_get_subject', array($this, 'ajax_get_subject'));
+        add_action('wp_ajax_nopriv_ai_tutor_get_subject', array($this, 'ajax_get_subject'));
+        add_action('wp_ajax_ai_tutor_get_subject_lessons', array($this, 'ajax_get_subject_lessons'));
+        add_action('wp_ajax_nopriv_ai_tutor_get_subject_lessons', array($this, 'ajax_get_subject_lessons'));
+        add_action('wp_ajax_ai_tutor_get_lesson', array($this, 'ajax_get_lesson'));
+        add_action('wp_ajax_nopriv_ai_tutor_get_lesson', array($this, 'ajax_get_lesson'));
+        
+        // Progress and testing
+        add_action('wp_ajax_ai_tutor_progress', array($this, 'update_progress'));
         add_action('wp_ajax_ai_tutor_test_connection', array($this, 'test_connection'));
     }
     
@@ -668,5 +681,164 @@ class AI_Tutor_API {
         } else {
             wp_send_json_error('Failed to connect to AI backend. Please check your settings.');
         }
+    }
+    
+    // AJAX Navigation Methods
+    public function ajax_get_subjects() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        $subjects = get_posts(array(
+            'post_type' => 'ai_subject',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ));
+        
+        $subjects_data = array();
+        foreach ($subjects as $subject) {
+            $lessons_count = count(get_posts(array(
+                'post_type' => 'ai_lesson',
+                'meta_query' => array(
+                    'relation' => 'OR',
+                    array('key' => '_ai_lesson_subject', 'value' => $subject->ID, 'compare' => '='),
+                    array('key' => '_ai_lesson_subject_id', 'value' => $subject->ID, 'compare' => '=')
+                ),
+                'post_status' => 'publish',
+                'numberposts' => -1
+            )));
+            
+            $subjects_data[] = array(
+                'id' => $subject->ID,
+                'title' => $subject->post_title,
+                'description' => $subject->post_content,
+                'icon' => get_post_meta($subject->ID, '_ai_subject_icon', true) ?: '📚',
+                'color' => get_post_meta($subject->ID, '_ai_subject_color', true) ?: '#007cba',
+                'difficulty' => get_post_meta($subject->ID, '_ai_subject_difficulty', true) ?: 'Mixed',
+                'lessons_count' => $lessons_count
+            );
+        }
+        
+        wp_send_json_success($subjects_data);
+    }
+    
+    public function ajax_get_subject() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        $subject_id = intval($_POST['subject_id']);
+        $subject = get_post($subject_id);
+        
+        if (!$subject || $subject->post_type !== 'ai_subject') {
+            wp_send_json_error('Subject not found');
+            return;
+        }
+        
+        $lessons_count = count(get_posts(array(
+            'post_type' => 'ai_lesson',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array('key' => '_ai_lesson_subject', 'value' => $subject_id, 'compare' => '='),
+                array('key' => '_ai_lesson_subject_id', 'value' => $subject_id, 'compare' => '=')
+            ),
+            'post_status' => 'publish',
+            'numberposts' => -1
+        )));
+        
+        $subject_data = array(
+            'id' => $subject->ID,
+            'title' => $subject->post_title,
+            'description' => $subject->post_content,
+            'icon' => get_post_meta($subject_id, '_ai_subject_icon', true) ?: '📚',
+            'color' => get_post_meta($subject_id, '_ai_subject_color', true) ?: '#007cba',
+            'difficulty' => get_post_meta($subject_id, '_ai_subject_difficulty', true) ?: 'Mixed',
+            'lessons_count' => $lessons_count
+        );
+        
+        wp_send_json_success($subject_data);
+    }
+    
+    public function ajax_get_subject_lessons() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        $subject_id = intval($_POST['subject_id']);
+        $subject = get_post($subject_id);
+        
+        if (!$subject || $subject->post_type !== 'ai_subject') {
+            wp_send_json_error('Subject not found');
+            return;
+        }
+        
+        $lessons = get_posts(array(
+            'post_type' => 'ai_lesson',
+            'meta_query' => array(
+                'relation' => 'OR',
+                array('key' => '_ai_lesson_subject', 'value' => $subject_id, 'compare' => '='),
+                array('key' => '_ai_lesson_subject_id', 'value' => $subject_id, 'compare' => '=')
+            ),
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ));
+        
+        $lessons_data = array();
+        foreach ($lessons as $lesson) {
+            $lessons_data[] = array(
+                'id' => $lesson->ID,
+                'title' => $lesson->post_title,
+                'description' => wp_trim_words($lesson->post_content, 20),
+                'difficulty' => get_post_meta($lesson->ID, '_ai_lesson_difficulty', true) ?: 'intermediate',
+                'duration' => get_post_meta($lesson->ID, '_ai_lesson_duration', true) ?: 30,
+                'order' => get_post_meta($lesson->ID, '_ai_lesson_order', true) ?: 1
+            );
+        }
+        
+        $subject_data = array(
+            'id' => $subject->ID,
+            'title' => $subject->post_title,
+            'description' => $subject->post_content,
+            'icon' => get_post_meta($subject_id, '_ai_subject_icon', true) ?: '📚',
+            'color' => get_post_meta($subject_id, '_ai_subject_color', true) ?: '#007cba',
+            'difficulty' => get_post_meta($subject_id, '_ai_subject_difficulty', true) ?: 'Mixed'
+        );
+        
+        wp_send_json_success(array(
+            'subject' => $subject_data,
+            'lessons' => $lessons_data
+        ));
+    }
+    
+    public function ajax_get_lesson() {
+        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        
+        $lesson_id = intval($_POST['lesson_id']);
+        $lesson = get_post($lesson_id);
+        
+        if (!$lesson || $lesson->post_type !== 'ai_lesson') {
+            wp_send_json_error('Lesson not found');
+            return;
+        }
+        
+        $subject_id = get_post_meta($lesson_id, '_ai_lesson_subject', true);
+        $subject = $subject_id ? get_post($subject_id) : null;
+        
+        $lesson_data = array(
+            'id' => $lesson->ID,
+            'title' => $lesson->post_title,
+            'content' => $lesson->post_content,
+            'description' => wp_trim_words($lesson->post_content, 30),
+            'difficulty' => get_post_meta($lesson_id, '_ai_lesson_difficulty', true) ?: 'intermediate',
+            'duration' => get_post_meta($lesson_id, '_ai_lesson_duration', true) ?: 30,
+            'order' => get_post_meta($lesson_id, '_ai_lesson_order', true) ?: 1,
+            'subject' => $subject ? array(
+                'id' => $subject->ID,
+                'title' => $subject->post_title,
+                'icon' => get_post_meta($subject_id, '_ai_subject_icon', true) ?: '📚'
+            ) : null,
+            'examples' => json_decode(get_post_meta($lesson_id, '_ai_lesson_examples', true) ?: '[]', true),
+            'quiz' => json_decode(get_post_meta($lesson_id, '_ai_lesson_quiz', true) ?: '[]', true)
+        );
+        
+        wp_send_json_success($lesson_data);
     }
 }
