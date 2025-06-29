@@ -22,7 +22,7 @@ define('AI_TUTOR_VERSION', '1.0.1');
 // Include required files
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-ai-tutor.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-database.php';
-require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-ai-direct.php';
+require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-direct-ai.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-api.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'includes/class-shortcodes.php';
 require_once AI_TUTOR_PLUGIN_PATH . 'create-sample-data.php';
