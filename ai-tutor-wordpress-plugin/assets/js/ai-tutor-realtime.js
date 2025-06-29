@@ -5,6 +5,12 @@
 
 class AITutorRealtime {
     constructor() {
+        if (typeof aiTutorAjax === 'undefined') {
+            console.error('aiTutorAjax not loaded, waiting...');
+            setTimeout(() => this.init(), 500);
+            return;
+        }
+        
         this.apiUrl = aiTutorAjax.ajaxurl;
         this.nonce = aiTutorAjax.nonce;
         this.currentLessonId = null;
@@ -22,53 +28,62 @@ class AITutorRealtime {
     }
     
     setupEventListeners() {
-        // Chat form submission
-        jQuery(document).on('submit', '.ai-chat-form', (e) => {
+        // Chat functionality - multiple selectors for compatibility
+        jQuery(document).on('click', '#send-chat-btn, .send-btn', (e) => {
             e.preventDefault();
             this.sendMessage();
         });
         
-        // Enter key in chat input
-        jQuery(document).on('keypress', '.ai-chat-input', (e) => {
+        jQuery(document).on('keypress', '#chat-input, .chat-input, .ai-chat-input', (e) => {
             if (e.which === 13 && !e.shiftKey) {
                 e.preventDefault();
                 this.sendMessage();
             }
         });
         
-        // Generate content button
+        // AI Content Generation buttons
         jQuery(document).on('click', '.generate-content-btn', (e) => {
             e.preventDefault();
             this.generateLessonContent(jQuery(e.target).data('lesson-id'));
         });
         
-        // Generate questions button
         jQuery(document).on('click', '.generate-questions-btn', (e) => {
             e.preventDefault();
             this.generateQuestions(jQuery(e.target).data('lesson-id'));
         });
         
-        // Submit answer button
+        jQuery(document).on('click', '.generate-examples-btn', (e) => {
+            e.preventDefault();
+            this.generateExamples(jQuery(e.target).data('lesson-id'));
+        });
+        
+        // Answer evaluation
         jQuery(document).on('click', '.submit-answer-btn', (e) => {
             e.preventDefault();
             this.evaluateAnswer(e.target);
         });
         
         // Auto-resize textarea
-        jQuery(document).on('input', '.ai-chat-input', function() {
+        jQuery(document).on('input', '#chat-input, .chat-input, .ai-chat-input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
     }
     
     initializeChatInterface() {
-        this.chatContainer = jQuery('.ai-chat-messages');
-        this.messageInput = jQuery('.ai-chat-input');
+        // Try multiple selectors for compatibility
+        this.chatContainer = jQuery('#chat-messages, .chat-messages, .ai-chat-messages').first();
+        this.messageInput = jQuery('#chat-input, .chat-input, .ai-chat-input').first();
         
         // Auto-scroll to bottom
         if (this.chatContainer.length) {
             this.scrollToBottom();
         }
+        
+        console.log('Chat interface initialized:', {
+            chatContainer: this.chatContainer.length,
+            messageInput: this.messageInput.length
+        });
     }
     
     loadChatHistory() {
@@ -84,6 +99,12 @@ class AITutorRealtime {
     }
     
     async sendMessage() {
+        if (!this.messageInput || !this.chatContainer) {
+            console.error('Chat interface not properly initialized');
+            this.initializeChatInterface();
+            return;
+        }
+        
         const message = this.messageInput.val().trim();
         if (!message || this.isTyping) return;
         
@@ -147,20 +168,29 @@ class AITutorRealtime {
     
     setTypingIndicator(show) {
         this.isTyping = show;
+        const typingElement = jQuery('#typing-indicator');
         
         if (show) {
-            const typingHtml = `
-                <div class="chat-message ai-message typing-indicator">
-                    <div class="message-avatar">🤖</div>
-                    <div class="message-content">
-                        <div class="typing-dots">
-                            <span></span><span></span><span></span>
+            // Use built-in typing indicator if available, otherwise create one
+            if (typingElement.length) {
+                typingElement.show();
+            } else {
+                const typingHtml = `
+                    <div class="chat-message ai-message typing-indicator">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            this.chatContainer.append(typingHtml);
+                `;
+                this.chatContainer.append(typingHtml);
+            }
         } else {
+            if (typingElement.length) {
+                typingElement.hide();
+            }
             this.chatContainer.find('.typing-indicator').remove();
         }
         
@@ -179,7 +209,8 @@ class AITutorRealtime {
         const button = jQuery(`.generate-content-btn[data-lesson-id="${lessonId}"]`);
         const originalText = button.text();
         
-        button.prop('disabled', true).text('Generating...');
+        button.prop('disabled', true).text('🚀 Generating...');
+        this.showLoadingOverlay('Generating AI content...');
         
         try {
             const response = await this.callAjax('ai_tutor_generate_content', {
@@ -197,6 +228,7 @@ class AITutorRealtime {
             console.error('Content generation error:', error);
         } finally {
             button.prop('disabled', false).text(originalText);
+            this.hideLoadingOverlay();
         }
     }
     
@@ -270,7 +302,8 @@ class AITutorRealtime {
         const button = jQuery(`.generate-questions-btn[data-lesson-id="${lessonId}"]`);
         const originalText = button.text();
         
-        button.prop('disabled', true).text('Generating Questions...');
+        button.prop('disabled', true).text('❓ Generating...');
+        this.showLoadingOverlay('Generating practice questions...');
         
         try {
             const response = await this.callAjax('ai_tutor_generate_questions', {
@@ -291,13 +324,51 @@ class AITutorRealtime {
             console.error('Question generation error:', error);
         } finally {
             button.prop('disabled', false).text(originalText);
+            this.hideLoadingOverlay();
         }
     }
     
+    async generateExamples(lessonId) {
+        if (!lessonId) return;
+        
+        const button = jQuery(`.generate-examples-btn[data-lesson-id="${lessonId}"]`);
+        const originalText = button.text();
+        
+        button.prop('disabled', true).text('💡 Generating...');
+        this.showLoadingOverlay('Generating examples...');
+        
+        try {
+            const response = await this.callAjax('ai_tutor_generate_examples', {
+                lesson_id: lessonId,
+                count: 3
+            });
+            
+            if (response.success) {
+                this.displayExamples(response.data.examples);
+                this.showSuccess('Examples generated successfully!');
+            } else {
+                this.showError(response.data || 'Failed to generate examples');
+            }
+        } catch (error) {
+            this.showError('Failed to generate examples');
+            console.error('Example generation error:', error);
+        } finally {
+            button.prop('disabled', false).text(originalText);
+            this.hideLoadingOverlay();
+        }
+    }
+
     displayQuestions(questions) {
         const questionsContainer = jQuery('.questions-container');
         if (questionsContainer.length && questions) {
             questionsContainer.html(this.renderQuiz(questions));
+        }
+    }
+
+    displayExamples(examples) {
+        const examplesContainer = jQuery('#generated-content');
+        if (examplesContainer.length && examples) {
+            examplesContainer.show().html(this.renderExamples(examples));
         }
     }
     
@@ -381,6 +452,32 @@ class AITutorRealtime {
         this.showNotification(message, 'error');
     }
     
+    showLoadingOverlay(message = 'Processing...') {
+        const loadingOverlay = jQuery('#loading-overlay');
+        if (loadingOverlay.length) {
+            loadingOverlay.find('p').text(message);
+            loadingOverlay.show();
+        } else {
+            // Create loading overlay if it doesn't exist
+            const overlayHtml = `
+                <div id="loading-overlay-ai" class="loading-overlay" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                    <div class="loading-spinner" style="background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+                        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                        <p style="margin: 0; color: #333;">${message}</p>
+                    </div>
+                </div>
+            `;
+            jQuery('body').append(overlayHtml);
+        }
+    }
+
+    hideLoadingOverlay() {
+        const loadingOverlay = jQuery('#loading-overlay, #loading-overlay-ai');
+        if (loadingOverlay.length) {
+            loadingOverlay.hide();
+        }
+    }
+    
     showNotification(message, type) {
         const notificationHtml = `
             <div class="ai-tutor-notification ${type}">
@@ -399,9 +496,12 @@ class AITutorRealtime {
     }
 }
 
-// Initialize when document is ready
+// Initialize when document is ready and make globally accessible
 jQuery(document).ready(function() {
     if (typeof aiTutorAjax !== 'undefined') {
-        new AITutorRealtime();
+        window.aiTutorRealtime = new AITutorRealtime();
+        console.log('AITutorRealtime initialized globally');
+    } else {
+        console.error('aiTutorAjax not available for initialization');
     }
 });
