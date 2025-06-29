@@ -28,13 +28,13 @@ class AITutorRealtime {
     }
     
     setupEventListeners() {
-        // Chat functionality - multiple selectors for compatibility
-        jQuery(document).on('click', '#send-chat-btn, .send-btn', (e) => {
+        // Chat functionality - multiple selectors for compatibility including new ones
+        jQuery(document).on('click', '#send-chat-btn, .send-btn, #ai-tutor-send-button, .ai-send-button', (e) => {
             e.preventDefault();
             this.sendMessage();
         });
         
-        jQuery(document).on('keypress', '#chat-input, .chat-input, .ai-chat-input', (e) => {
+        jQuery(document).on('keypress', '#chat-input, .chat-input, .ai-chat-input, #ai-tutor-message-input', (e) => {
             if (e.which === 13 && !e.shiftKey) {
                 e.preventDefault();
                 this.sendMessage();
@@ -123,6 +123,9 @@ class AITutorRealtime {
             this.messageInput = jQuery('#ai-tutor-message-input');
             this.sendButton = jQuery('#ai-tutor-send-button');
             
+            // Add event listeners to the new elements
+            this.setupEventListeners();
+            
             console.log('Chat interface created dynamically');
         } else {
             console.log('No suitable container found for chat interface');
@@ -142,18 +145,28 @@ class AITutorRealtime {
     }
     
     async sendMessage() {
-        if (!this.messageInput || !this.chatContainer || this.messageInput.length === 0) {
-            console.error('Chat interface not properly initialized');
-            this.initializeChatInterface();
-            if (!this.messageInput || this.messageInput.length === 0) {
-                console.error('Still cannot find message input');
-                return;
-            }
+        // Re-initialize elements if needed
+        if (!this.messageInput || this.messageInput.length === 0) {
+            this.messageInput = jQuery('#ai-tutor-message-input, #chat-input, .chat-input, .ai-chat-input').first();
+        }
+        if (!this.chatContainer || this.chatContainer.length === 0) {
+            this.chatContainer = jQuery('#ai-tutor-chat-messages, #chat-messages, .chat-messages, .ai-chat-messages').first();
         }
         
-        const messageValue = this.messageInput.val();
-        if (!messageValue) {
-            console.error('Message input value is undefined');
+        if (!this.messageInput || this.messageInput.length === 0) {
+            console.error('Chat interface not properly initialized');
+            this.initializeChatInterface();
+            // Wait a moment for the interface to be created
+            setTimeout(() => {
+                this.messageInput = jQuery('#ai-tutor-message-input').first();
+                this.chatContainer = jQuery('#ai-tutor-chat-messages').first();
+            }, 100);
+            return;
+        }
+        
+        const messageValue = this.messageInput.val() || this.messageInput.value || '';
+        if (!messageValue || messageValue.trim() === '') {
+            console.log('No message to send');
             return;
         }
         
