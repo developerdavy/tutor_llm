@@ -1,0 +1,23 @@
+✅ WordPress AJAX variables: {ajaxurl: 'http://localhost/wordpress/wp-admin/admin-ajax.php', nonce: 'e5d74de668', rest_url: 'http://localhost/wordpress/wp-json/ai-tutor/v1/', rest_nonce: '61f492854f', backend_url: '', …}
+VM71:14 
+=== TESTING CURRENT AJAX CALLS ===
+VM71:72 
+=== DOM ELEMENTS CHECK ===
+VM71:74 Found 10 AI Tutor elements: NodeList(10) [div.ai-tutor-dashboard, div.subject-card, div.subject-card, div.subject-card, div.subject-card, div.ai-tutor-subjects, div.subject-card, div.subject-card, div.subject-card, div.subject-card]
+VM71:78 ✅ Navigation instance found: AITutorNavigation {apiUrl: 'http://localhost/wordpress/wp-admin/admin-ajax.php', nonce: 'e5d74de668', currentPage: 'lessons', selectedSubject: {…}, selectedLesson: null}
+VM71:83 
+=== SUMMARY ===
+VM71:84 Check the logs above for:
+VM71:85 - AJAX connectivity status
+VM71:86 - Available subjects and lessons data
+VM71:87 - Any specific error messages
+VM71:88 - DOM element presence
+undefined
+VM71:24 📚 Subjects response: 200
+VM71:26 📚 Subjects data: {"success":true,"data":[{"id":19,"title":"Chemistry","description":"Organic, Inorganic, Physical","icon":"\ud83e\uddea","color":"#FF7043","difficulty":"Mixed","lessons_count":2},{"id":21,"title":"Literature","description":"Poetry, Prose, Drama","icon":"\ud83d\udcda","color":"#9C27B0","difficulty":"Mixed","lessons_count":2},{"id":18,"title":"Mathematics","description":"Algebra, Geometry, Calculus","icon":"\ud83d\udcca","color":"#1E88E5","difficulty":"Mixed","lessons_count":3},{"id":20,"title":"Physics","description":"Mechanics, Thermodynamics","icon":"\u269b\ufe0f","color":"#43A047","difficulty":"Mixed","lessons_count":2}]}
+VM71:30 📚 Parsed subjects: {success: true, data: Array(4)}
+VM71:35 
+📖 Testing lessons for subject ID: 19
+VM71:43 📖 Lessons response: 200
+VM71:45 📖 Lessons data: {"success":true,"data":[{"id":25,"title":"Atomic Theory and Periodic Trends","description":"Electron configuration, periodic properties, and atomic structure","difficulty":"Beginner","duration":"40","icon":"\ud83d\udcd6"},{"id":26,"title":"Chemical Bonding and Molecular Geometry","description":"Ionic, covalent, and metallic bonds, VSEPR theory","difficulty":"Intermediate","duration":"45","icon":"\ud83d\udcd6"}]}
+VM71:49 📖 Parsed lessons: {success: true, data: Array(2)}
