@@ -127,11 +127,13 @@ class AI_Tutor_Settings {
     }
     
     public function backend_section_callback() {
-        echo '<p>Configure your AI backend service URL. This should point to your Replit AI service.</p>';
+        echo '<p><strong>For Local WordPress:</strong> Leave Backend URL empty to use Direct AI mode (recommended for local testing).</p>';
+        echo '<p>Only fill this if you have a deployed backend service.</p>';
     }
     
     public function direct_section_callback() {
-        echo '<p>Optional: Configure direct API keys if not using the backend service.</p>';
+        echo '<p><strong>Recommended for Local Use:</strong> Add your Google API key here for direct AI functionality.</p>';
+        echo '<p>This works without needing a backend server running.</p>';
     }
     
     public function backend_url_callback() {
