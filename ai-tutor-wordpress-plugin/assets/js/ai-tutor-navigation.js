@@ -18,6 +18,9 @@ class AITutorNavigation {
         this.selectedLesson = null;
         
         this.init();
+        
+        // Make this instance globally accessible
+        window.aiTutorNavigation = this;
     }
     
     init() {
@@ -49,8 +52,30 @@ class AITutorNavigation {
             this.showSubjectLessons(subjectId);
         });
         
-        // Lesson clicks
-        jQuery(document).on('click', '.lesson-item a, .lesson-card', (e) => {
+        // Lesson clicks - both card clicks and button clicks
+        jQuery(document).on('click', '.lesson-card', (e) => {
+            // Don't trigger if clicking on a button
+            if (jQuery(e.target).closest('button').length === 0) {
+                e.preventDefault();
+                const lessonId = jQuery(e.currentTarget).data('lesson-id');
+                if (lessonId) {
+                    this.selectLesson(lessonId);
+                }
+            }
+        });
+        
+        // Start lesson button clicks
+        jQuery(document).on('click', '.start-lesson-btn', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const lessonId = jQuery(e.currentTarget).data('lesson-id');
+            if (lessonId) {
+                this.selectLesson(lessonId);
+            }
+        });
+        
+        // Lesson link clicks (for subjects template compatibility)
+        jQuery(document).on('click', '.lesson-link', (e) => {
             e.preventDefault();
             const lessonId = jQuery(e.currentTarget).data('lesson-id');
             if (lessonId) {

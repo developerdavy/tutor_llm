@@ -108,7 +108,7 @@ $subjects = get_posts(array(
                                 <ul class="lesson-list">
                                     <?php foreach (array_slice($subject_lessons, 0, 3) as $lesson): ?>
                                         <li class="lesson-item">
-                                            <a href="javascript:void(0)" class="lesson-link" onclick="openAILesson(<?php echo esc_attr($lesson->ID); ?>)">
+                                            <a href="javascript:void(0)" class="lesson-link" data-lesson-id="<?php echo esc_attr($lesson->ID); ?>">
                                                 <?php echo esc_html($lesson->post_title); ?>
                                             </a>
                                         </li>
@@ -547,7 +547,9 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const lessonId = this.dataset.lessonId;
-            openAILesson(lessonId);
+            if (window.aiTutorNavigation) {
+                window.aiTutorNavigation.selectLesson(lessonId);
+            }
         });
     });
 
@@ -683,72 +685,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Global function to open AI lesson interface
 window.openAILesson = function(lessonId) {
-    // Create a new page with AI lesson interface
-    const aiLessonHtml = `
-        <div class="ai-lesson-container">
-            <div class="ai-lesson-loading">
-                <div class="loading-spinner"></div>
-                <p>Loading AI-powered lesson...</p>
-            </div>
-        </div>
-        <script>
-            // Load AI lesson shortcode content
-            document.addEventListener('DOMContentLoaded', function() {
-                const container = document.querySelector('.ai-lesson-container');
-                
-                // Replace with AI lesson shortcode
-                fetch('${window.location.origin}${window.location.pathname}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        'ai_lesson_shortcode': '1',
-                        'lesson_id': '${lessonId}'
-                    })
-                })
-                .then(response => response.text())
-                .then(html => {
-                    container.innerHTML = '[ai_tutor_ai_lesson lesson_id="' + lessonId + '"]';
-                    // Trigger WordPress shortcode processing if possible
-                    if (typeof wp !== 'undefined' && wp.hooks) {
-                        wp.hooks.doAction('ai_tutor_lesson_loaded', lessonId);
-                    }
-                })
-                .catch(error => {
-                    container.innerHTML = '<div class="error">Failed to load lesson. Please try again.</div>';
-                });
-            });
-        </script>
-    `;
+    // Use the AITutorNavigation class if available
+    if (window.aiTutorNavigation && window.aiTutorNavigation.selectLesson) {
+        window.aiTutorNavigation.selectLesson(lessonId);
+        return;
+    }
     
-    // Open in new window/tab or replace current content
-    const lessonWindow = window.open('', '_blank');
-    lessonWindow.document.write(\`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>AI Lesson</title>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; }
-                .ai-lesson-container { max-width: 1200px; margin: 0 auto; }
-                .ai-lesson-loading { text-align: center; padding: 60px 20px; }
-                .loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .error { color: #dc3545; background: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            \${aiLessonHtml}
-        </body>
-        </html>
-    \`);
-    lessonWindow.document.close();
-    
-    // Alternative: redirect current page to lesson
-    // window.location.href = window.location.pathname + '?ai_lesson=' + lessonId;
+    // Fallback: redirect to lesson page with parameter
+    const currentUrl = window.location.href.split('?')[0];
+    window.location.href = currentUrl + '?ai_lesson=' + lessonId;
 };
 
 // Also add navigation functions for dashboard
