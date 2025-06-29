@@ -91,10 +91,47 @@ Add these shortcodes to your WordPress pages or posts:
 - Always check browser console for detailed error messages
 - Plugin version 1.0.1 includes improved error handling and debugging
 
+## Current Status & Solutions
+
+### Quick Fix for AJAX 400 Errors
+
+**Issue:** The plugin is experiencing AJAX connectivity issues in your WordPress environment.
+
+**Immediate Solutions:**
+1. **Use Fallback Mode**: The plugin now includes automatic fallback navigation that provides basic functionality even when AJAX fails
+2. **Debug AJAX**: Use the `debug-ajax.php` file (copy to WordPress root) to test AJAX functionality directly
+3. **Clear Cache**: Hard refresh browser (Ctrl+F5) and clear all caches
+4. **Check Logs**: Enable WordPress debug logging to see detailed error information
+
+### Debugging Steps
+
+1. **Check WordPress Environment**:
+   - Ensure WordPress is properly installed
+   - Verify plugin is activated in WP Admin → Plugins
+   - Check that admin-ajax.php is accessible
+
+2. **Test AJAX Directly**:
+   - Copy `debug-ajax.php` to your WordPress root directory
+   - Access it via browser: `http://your-site.com/debug-ajax.php`
+   - Click the test buttons to see detailed error information
+
+3. **Enable Debug Logging**:
+   - The plugin now includes detailed debug logging
+   - Check WordPress error logs for "AI Tutor:" entries
+   - Look for nonce verification and AJAX call details
+
+### Alternative: Use Replit Backend
+
+If WordPress AJAX continues to fail, configure the plugin to use the Replit backend:
+1. Go to AI Tutor → Settings in WordPress admin
+2. Set Backend URL to your Replit deployment URL
+3. Test the connection using the "Test Connection" button
+
 ## Support
 
 If issues persist:
-1. Check WordPress error logs
-2. Enable WordPress debug mode
-3. Verify all plugin dependencies are met
+1. Check the debug-ajax.php test results
+2. Review WordPress error logs for "AI Tutor:" entries
+3. Verify WordPress debug mode is enabled
 4. Ensure proper WordPress user permissions
+5. Consider using the Replit backend mode as alternative

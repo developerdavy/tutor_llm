@@ -685,7 +685,16 @@ class AI_Tutor_API {
     
     // AJAX Navigation Methods
     public function ajax_get_subjects() {
-        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        // Debug logging
+        error_log('AI Tutor: ajax_get_subjects called');
+        error_log('AI Tutor: POST data: ' . print_r($_POST, true));
+        
+        // Check nonce with better error handling
+        if (!wp_verify_nonce($_POST['nonce'], 'ai_tutor_nonce')) {
+            error_log('AI Tutor: Nonce verification failed for get_subjects');
+            wp_send_json_error('Security check failed');
+            return;
+        }
         
         $subjects = get_posts(array(
             'post_type' => 'ai_subject',
@@ -758,7 +767,16 @@ class AI_Tutor_API {
     }
     
     public function ajax_get_subject_lessons() {
-        check_ajax_referer('ai_tutor_nonce', 'nonce');
+        // Debug logging
+        error_log('AI Tutor: ajax_get_subject_lessons called');
+        error_log('AI Tutor: POST data: ' . print_r($_POST, true));
+        
+        // Check nonce with better error handling
+        if (!wp_verify_nonce($_POST['nonce'], 'ai_tutor_nonce')) {
+            error_log('AI Tutor: Nonce verification failed');
+            wp_send_json_error('Security check failed');
+            return;
+        }
         
         $subject_id = intval($_POST['subject_id']);
         $subject = get_post($subject_id);
