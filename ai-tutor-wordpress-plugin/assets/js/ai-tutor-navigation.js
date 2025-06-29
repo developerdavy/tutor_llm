@@ -83,13 +83,8 @@ class AITutorNavigation {
     
     async selectSubject(subjectId) {
         try {
-            const response = await this.callAjax('get_subject', { subject_id: subjectId });
-            if (response.success && response.data) {
-                this.selectedSubject = response.data;
-                this.showSubjectDetails(response.data);
-            } else {
-                this.showError('Failed to load subject details');
-            }
+            // Load lessons for this subject instead of showing details
+            this.showSubjectLessons(subjectId);
         } catch (error) {
             console.error('Error loading subject:', error);
             this.showError('Error loading subject');
@@ -379,6 +374,13 @@ class AITutorNavigation {
     
     async callAjax(action, data) {
         return new Promise((resolve, reject) => {
+            // Check if WordPress AJAX variables are available
+            if (typeof aiTutorAjax === 'undefined') {
+                console.error('WordPress AJAX variables not loaded. Make sure you\'re using this in a WordPress environment.');
+                reject(new Error('WordPress AJAX not available'));
+                return;
+            }
+            
             jQuery.ajax({
                 url: this.apiUrl,
                 type: 'POST',
@@ -388,7 +390,15 @@ class AITutorNavigation {
                     ...data
                 },
                 success: resolve,
-                error: reject
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', {
+                        url: this.url,
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    reject(new Error(`AJAX failed: ${status} - ${error}`));
+                }
             });
         });
     }
