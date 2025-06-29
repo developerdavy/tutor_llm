@@ -1,0 +1,58 @@
+
+=== STEP 1: ENVIRONMENT DETECTION ===
+VM702:13 Current URL: http://localhost/wordpress/alex-the-ai/
+VM702:20 ✅ WordPress AJAX variables found: {ajaxurl: 'http://localhost/wordpress/wp-admin/admin-ajax.php', nonce: 'fa2c41a748', rest_url: 'http://localhost/wordpress/wp-json/ai-tutor/v1/', rest_nonce: '99bdb64f7b', backend_url: '', …}
+VM702:38 
+=== STEP 2: TESTING AJAX ENDPOINTS ===
+VM702:41 
+🧪 Testing: http://localhost/wordpress/wp-admin/admin-ajax.php
+Promise {<pending>}
+VM702:52 Status: 200 OK
+VM702:55 ✅ AJAX endpoint is accessible
+VM702:57 Response preview: {"success":false}...
+VM702:75 
+=== STEP 3: TESTING AI TUTOR ACTIONS ===
+VM702:84 
+🧪 Testing action: ai_tutor_get_subjects
+VM702:95 Status: 200 OK
+VM702:101 ❌ Nonce validation failed
+VM702:84 
+🧪 Testing action: ai_tutor_get_subject_lessons
+VM702:95 Status: 200 OK
+VM702:101 ❌ Nonce validation failed
+VM702:84 
+🧪 Testing action: ai_tutor_get_lesson
+VM702:87 
+            
+            
+           POST http://localhost/wordpress/wp-admin/admin-ajax.php 403 (Forbidden)
+testAITutorActions @ VM702:87
+await in testAITutorActions
+runCompleteDebug @ VM702:182
+await in runCompleteDebug
+(anonymous) @ VM702:194Understand this error
+VM702:95 Status: 403 Forbidden
+VM702:113 ⚠️ Unexpected response: -1
+VM702:124 
+=== STEP 4: PLUGIN STATUS CHECK ===
+VM702:130 Found 9 subject-related elements
+VM702:131 Found 2 AI Tutor elements total
+VM702:136 Found 4 AI Tutor scripts loaded:
+VM702:137  - http://localhost/wordpress/wp-content/plugins/ai-tutor-wordpress-plugin/assets/js/ai-tutor-realtime.js?ver=1.0.1
+VM702:137  - http://localhost/wordpress/wp-content/plugins/ai-tutor-wordpress-plugin/assets/js/ai-tutor-navigation.js?ver=1.0.1
+VM702:137  - http://localhost/wordpress/wp-content/plugins/ai-tutor-wordpress-plugin/assets/js/ai-tutor-fallback.js?ver=1.0.1
+VM702:137  - http://localhost/wordpress/wp-content/plugins/ai-tutor-wordpress-plugin/assets/js/ai-tutor-ai-powered.js?ver=1.0.1
+VM702:140 Check browser console for any JavaScript errors above this message
+VM702:145 
+=== STEP 5: RECOMMENDED SOLUTIONS ===
+VM702:157 ✅ Working AJAX URL: http://localhost/wordpress/wp-admin/admin-ajax.php
+VM702:167 ✅ WordPress AJAX variables loaded correctly
+VM702:168 🔧 If still getting 400 errors:
+VM702:169 1. Check WordPress debug log for detailed errors
+VM702:170 2. Ensure user is logged in (for some actions)
+VM702:171 3. Clear browser cache completely
+VM702:172 4. Check if other plugins are interfering
+VM702:188 
+=== DEBUG COMPLETE ===
+VM702:189 📋 Copy all the above output and check the recommended solutions
+VM702:190 📧 If issues persist, share this debug output for further assistance
