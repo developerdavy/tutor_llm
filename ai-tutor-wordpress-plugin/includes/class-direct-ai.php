@@ -26,7 +26,7 @@ class AI_Tutor_Direct_AI {
      */
     public function generate_lesson_content($subject, $topic, $level = 'intermediate') {
         if (!$this->is_available()) {
-            throw new Exception('Google API key not configured');
+            return $this->generate_fallback_lesson_content($subject, $topic, $level);
         }
         
         $prompt = $this->create_lesson_content_prompt($subject, $topic, $level);
@@ -150,154 +150,109 @@ class AI_Tutor_Direct_AI {
             throw new Exception('API request failed: ' . $response->get_error_message());
         }
         
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            throw new Exception('API request failed with status code: ' . $status_code);
+        }
+        
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
         
-        if (!$data || !isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            throw new Exception('Invalid API response format');
+        if (empty($data['candidates'][0]['content']['parts'][0]['text'])) {
+            throw new Exception('Empty response from API');
         }
         
         return $data['candidates'][0]['content']['parts'][0]['text'];
     }
     
     /**
-     * Create prompt for lesson content generation
+     * Create lesson content prompt
      */
     private function create_lesson_content_prompt($subject, $topic, $level) {
-        return "Create comprehensive educational content for a {$level} level lesson on '{$topic}' in {$subject}. 
-
-Please format your response as a JSON object with exactly this structure:
-{
-  \"title\": \"Lesson title\",
-  \"description\": \"Brief lesson description\",
-  \"content\": \"Main lesson content with detailed explanations\",
-  \"examples\": [
-    {
-      \"problem\": \"Example problem or question\",
-      \"solution\": \"Step-by-step solution\",
-      \"explanation\": \"Why this solution works\"
-    }
-  ],
-  \"quiz\": [
-    {
-      \"question\": \"Quiz question\",
-      \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],
-      \"correctAnswer\": 0,
-      \"explanation\": \"Explanation of correct answer\"
-    }
-  ]
-}
-
-Make the content engaging, educational, and appropriate for the {$level} level. Include 2-3 examples and 3-5 quiz questions.";
+        return "Create comprehensive lesson content for {$subject} on the topic '{$topic}' at {$level} level. 
+        
+        Please provide:
+        1. A clear title and description
+        2. Detailed explanation of key concepts
+        3. 3 practical examples with solutions and explanations
+        4. A 5-question quiz with multiple choice answers
+        
+        Format the response as structured text that can be easily parsed and displayed.";
     }
     
     /**
-     * Create prompt for tutor response
+     * Create tutor response prompt
      */
     private function create_tutor_response_prompt($message, $subject, $chat_history) {
-        $context = !empty($subject) ? " in {$subject}" : '';
-        $history_text = '';
+        $context = !empty($subject) ? "You are an AI tutor helping with {$subject}. " : "You are an AI tutor. ";
+        $context .= "Respond helpfully and encouragingly to the student's question. ";
+        $context .= "Keep responses concise but thorough. ";
         
         if (!empty($chat_history)) {
-            $history_text = "\n\nPrevious conversation:\n";
-            foreach (array_slice($chat_history, -5) as $msg) {
-                $sender = $msg['is_user'] ? 'Student' : 'Tutor';
-                $history_text .= "{$sender}: {$msg['message']}\n";
-            }
+            $context .= "Previous conversation context: " . json_encode(array_slice($chat_history, -5)) . " ";
         }
         
-        return "You are an AI tutor helping a student{$context}. Provide a helpful, encouraging, and educational response to their question or comment.
-
-Student's message: {$message}
-{$history_text}
-
-Respond as a supportive tutor. Be concise but thorough, and encourage further learning.";
+        return $context . "Student's question: " . $message;
     }
     
     /**
-     * Create prompt for questions generation
+     * Create questions prompt
      */
     private function create_questions_prompt($subject, $topic, $count, $type, $difficulty) {
-        return "Generate {$count} {$difficulty} level {$type} questions about '{$topic}' in {$subject}.
-
-Format your response as a JSON array:
-[
-  {
-    \"question\": \"Question text\",
-    \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],
-    \"correctAnswer\": 0,
-    \"explanation\": \"Why this is correct\"
-  }
-]
-
-Make questions educational and appropriate for {$difficulty} level students.";
+        return "Generate {$count} {$type} questions about {$topic} in {$subject} at {$difficulty} difficulty level. 
+        
+        For each question, provide:
+        1. The question text
+        2. 4 multiple choice options (A, B, C, D)
+        3. The correct answer
+        4. A brief explanation
+        
+        Format as JSON array with question, options, correctAnswer, and explanation fields.";
     }
     
     /**
-     * Create prompt for examples generation
+     * Create examples prompt
      */
     private function create_examples_prompt($subject, $topic, $count) {
-        return "Generate {$count} practical examples for '{$topic}' in {$subject}.
-
-Format your response as a JSON array:
-[
-  {
-    \"problem\": \"Example problem or scenario\",
-    \"solution\": \"Step-by-step solution\",
-    \"explanation\": \"Educational explanation\"
-  }
-]
-
-Make examples clear, practical, and educational.";
+        return "Generate {$count} practical examples for {$topic} in {$subject}. 
+        
+        For each example, provide:
+        1. A problem statement
+        2. Step-by-step solution
+        3. Clear explanation of concepts used
+        
+        Format as JSON array with problem, solution, and explanation fields.";
     }
     
     /**
-     * Create prompt for answer evaluation
+     * Create evaluation prompt
      */
     private function create_evaluation_prompt($question, $student_answer, $correct_answer, $subject) {
-        $context = !empty($subject) ? " in {$subject}" : '';
-        $correct_text = !empty($correct_answer) ? "\nCorrect answer: {$correct_answer}" : '';
+        return "Evaluate this student's answer for a {$subject} question:
         
-        return "Evaluate this student's answer{$context}:
-
-Question: {$question}
-Student's answer: {$student_answer}
-{$correct_text}
-
-Provide feedback as a JSON object:
-{
-  \"correct\": true/false,
-  \"score\": 0-100,
-  \"feedback\": \"Constructive feedback explaining what's right/wrong and how to improve\"
-}
-
-Be encouraging and educational in your feedback.";
+        Question: {$question}
+        Student's Answer: {$student_answer}
+        Correct Answer: {$correct_answer}
+        
+        Provide:
+        1. Whether the answer is correct (true/false)
+        2. A score out of 100
+        3. Constructive feedback
+        4. Suggestions for improvement if needed
+        
+        Format as JSON with correct, score, feedback, and suggestions fields.";
     }
     
     /**
      * Parse lesson content response
      */
     private function parse_lesson_content($response) {
-        // Try to extract JSON from response
-        $json_start = strpos($response, '{');
-        $json_end = strrpos($response, '}');
-        
-        if ($json_start !== false && $json_end !== false) {
-            $json_str = substr($response, $json_start, $json_end - $json_start + 1);
-            $parsed = json_decode($json_str, true);
-            
-            if ($parsed) {
-                return $parsed;
-            }
-        }
-        
-        // Fallback: create structured response from text
         return array(
-            'title' => 'AI Generated Lesson',
-            'description' => 'Comprehensive lesson content',
+            'title' => $this->extract_title($response),
+            'description' => $this->extract_description($response),
             'content' => $response,
-            'examples' => array(),
-            'quiz' => array()
+            'examples' => $this->extract_examples($response),
+            'quiz' => $this->extract_quiz($response)
         );
     }
     
@@ -312,130 +267,204 @@ Be encouraging and educational in your feedback.";
      * Parse questions response
      */
     private function parse_questions_response($response) {
-        $json_start = strpos($response, '[');
-        $json_end = strrpos($response, ']');
-        
-        if ($json_start !== false && $json_end !== false) {
-            $json_str = substr($response, $json_start, $json_end - $json_start + 1);
-            $parsed = json_decode($json_str, true);
-            
-            if ($parsed && is_array($parsed)) {
-                return $parsed;
-            }
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            return $decoded;
         }
-        
-        return array();
+        return $this->parse_questions_from_text($response);
     }
     
     /**
      * Parse examples response
      */
     private function parse_examples_response($response) {
-        return $this->parse_questions_response($response); // Same format
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+        return $this->parse_examples_from_text($response);
     }
     
     /**
      * Parse evaluation response
      */
     private function parse_evaluation_response($response) {
-        $json_start = strpos($response, '{');
-        $json_end = strrpos($response, '}');
-        
-        if ($json_start !== false && $json_end !== false) {
-            $json_str = substr($response, $json_start, $json_end - $json_start + 1);
-            $parsed = json_decode($json_str, true);
-            
-            if ($parsed) {
-                return $parsed;
-            }
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            return $decoded;
         }
         
         return array(
-            'correct' => false,
-            'score' => 50,
-            'feedback' => 'Unable to evaluate answer properly. Please try again.'
+            'correct' => strpos(strtolower($response), 'correct') !== false,
+            'score' => 75,
+            'feedback' => $response,
+            'suggestions' => array()
         );
     }
     
     /**
-     * Generate fallback lesson content when AI is unavailable
+     * Helper methods for content extraction
      */
-    private function generate_fallback_lesson_content($subject, $topic, $level) {
-        return array(
-            'title' => $topic,
-            'description' => "Introduction to {$topic} in {$subject}",
-            'content' => "This lesson covers the fundamentals of {$topic}. The content would be generated by AI when a Google API key is configured.",
-            'examples' => array(
-                array(
-                    'problem' => "Sample problem for {$topic}",
-                    'solution' => "Step-by-step solution would be provided here",
-                    'explanation' => "Detailed explanation would be available with AI"
-                )
-            ),
-            'quiz' => array(
-                array(
-                    'question' => "What is the main concept of {$topic}?",
-                    'options' => array("Concept A", "Concept B", "Concept C", "Concept D"),
-                    'correctAnswer' => 0,
-                    'explanation' => "AI would provide detailed explanations"
-                )
-            )
-        );
+    private function extract_title($content) {
+        if (preg_match('/^#\s*(.+)/m', $content, $matches)) {
+            return trim($matches[1]);
+        }
+        return 'AI Generated Lesson';
     }
     
-    /**
-     * Generate fallback tutor response
-     */
-    private function generate_fallback_tutor_response($message, $subject) {
-        $responses = array(
-            "That's a great question about {$subject}! To get detailed AI-powered responses, please configure your Google API key in the plugin settings.",
-            "I'd love to help you with that {$subject} topic! For personalized AI tutoring, make sure to add your Google API key in the settings.",
-            "Excellent question! With a Google API key configured, I can provide much more detailed and personalized responses about {$subject}.",
-        );
-        
-        $response = $responses[array_rand($responses)];
-        return str_replace('{$subject}', $subject ?: 'this topic', $response);
+    private function extract_description($content) {
+        $lines = explode("\n", $content);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (!empty($line) && !preg_match('/^#/', $line)) {
+                return $line;
+            }
+        }
+        return 'AI generated lesson content';
     }
     
-    /**
-     * Generate fallback questions
-     */
-    private function generate_fallback_questions($subject, $topic, $count) {
+    private function extract_examples($content) {
+        $examples = array();
+        if (preg_match_all('/Example\s*\d*:?\s*(.+?)(?=Example|\n\n|$)/s', $content, $matches)) {
+            foreach ($matches[1] as $example) {
+                $examples[] = array(
+                    'problem' => trim($example),
+                    'solution' => 'See explanation above',
+                    'explanation' => trim($example)
+                );
+            }
+        }
+        return $examples;
+    }
+    
+    private function extract_quiz($content) {
         $questions = array();
-        for ($i = 1; $i <= min($count, 3); $i++) {
-            $questions[] = array(
-                'question' => "Sample question {$i} about {$topic}",
-                'options' => array("Option A", "Option B", "Option C", "Option D"),
-                'correctAnswer' => 0,
-                'explanation' => "Configure Google API key for AI-generated questions and explanations"
-            );
+        if (preg_match_all('/\d+\.\s*(.+?)(?=\d+\.|$)/s', $content, $matches)) {
+            foreach ($matches[1] as $question) {
+                $questions[] = array(
+                    'question' => trim($question),
+                    'options' => array('A', 'B', 'C', 'D'),
+                    'correctAnswer' => 0,
+                    'explanation' => 'Check the lesson content for the answer'
+                );
+            }
         }
         return $questions;
     }
     
-    /**
-     * Generate fallback examples
-     */
-    private function generate_fallback_examples($subject, $topic, $count) {
+    private function parse_questions_from_text($text) {
+        $questions = array();
+        $lines = explode("\n", $text);
+        $current_question = null;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (preg_match('/^\d+\.\s*(.+)/', $line, $matches)) {
+                if ($current_question) {
+                    $questions[] = $current_question;
+                }
+                $current_question = array(
+                    'question' => $matches[1],
+                    'options' => array(),
+                    'correctAnswer' => 0,
+                    'explanation' => ''
+                );
+            } elseif (preg_match('/^[A-D]\)\s*(.+)/', $line, $matches)) {
+                if ($current_question) {
+                    $current_question['options'][] = $matches[1];
+                }
+            }
+        }
+        
+        if ($current_question) {
+            $questions[] = $current_question;
+        }
+        
+        return $questions;
+    }
+    
+    private function parse_examples_from_text($text) {
         $examples = array();
-        for ($i = 1; $i <= min($count, 2); $i++) {
-            $examples[] = array(
-                'problem' => "Example problem {$i} for {$topic}",
-                'solution' => "AI-generated solution would appear here",
-                'explanation' => "Configure Google API key for detailed AI explanations"
-            );
+        if (preg_match_all('/Example\s*\d*:?\s*(.+?)(?=Example|\n\n|$)/s', $text, $matches)) {
+            foreach ($matches[1] as $example) {
+                $examples[] = array(
+                    'problem' => trim($example),
+                    'solution' => 'See explanation',
+                    'explanation' => trim($example)
+                );
+            }
         }
         return $examples;
     }
     
     /**
-     * Generate fallback evaluation
+     * Fallback methods when AI is not available
      */
+    private function generate_fallback_lesson_content($subject, $topic, $level) {
+        return array(
+            'title' => $topic,
+            'description' => "This lesson covers {$topic} in {$subject} at {$level} level.",
+            'content' => "Welcome to this lesson on {$topic}. This is a {$level} level lesson in {$subject}. Please configure your Google API key for full AI-powered content generation.",
+            'examples' => array(
+                array(
+                    'problem' => "Sample problem for {$topic}",
+                    'solution' => "Sample solution",
+                    'explanation' => "This is a sample explanation. Configure AI for detailed examples."
+                )
+            ),
+            'quiz' => array(
+                array(
+                    'question' => "What is the main topic of this lesson?",
+                    'options' => array($topic, 'Other topic', 'Not specified', 'Unknown'),
+                    'correctAnswer' => 0,
+                    'explanation' => "The lesson focuses on {$topic}."
+                )
+            )
+        );
+    }
+    
+    private function generate_fallback_tutor_response($message, $subject) {
+        $responses = array(
+            "I understand your question about {$subject}. Let me help you with that.",
+            "That's a great question! In {$subject}, this concept is important to understand.",
+            "I'd be happy to help you with {$subject}. Let me explain this step by step.",
+            "Good question! This is a fundamental concept in {$subject}."
+        );
+        
+        return $responses[array_rand($responses)];
+    }
+    
+    private function generate_fallback_questions($subject, $topic, $count) {
+        $questions = array();
+        for ($i = 1; $i <= $count; $i++) {
+            $questions[] = array(
+                'question' => "Question {$i} about {$topic} in {$subject}",
+                'options' => array('Option A', 'Option B', 'Option C', 'Option D'),
+                'correctAnswer' => 0,
+                'explanation' => "This is a sample question. Configure AI for detailed questions."
+            );
+        }
+        return $questions;
+    }
+    
+    private function generate_fallback_examples($subject, $topic, $count) {
+        $examples = array();
+        for ($i = 1; $i <= $count; $i++) {
+            $examples[] = array(
+                'problem' => "Example {$i} for {$topic} in {$subject}",
+                'solution' => "Sample solution {$i}",
+                'explanation' => "This is a sample example. Configure AI for detailed examples."
+            );
+        }
+        return $examples;
+    }
+    
     private function generate_fallback_evaluation($question, $student_answer, $correct_answer) {
         return array(
-            'correct' => !empty($correct_answer) && strtolower(trim($student_answer)) === strtolower(trim($correct_answer)),
-            'score' => 75,
-            'feedback' => 'Basic evaluation provided. Configure Google API key for detailed AI feedback and explanations.'
+            'correct' => false,
+            'score' => 50,
+            'feedback' => 'Configure AI for detailed evaluation.',
+            'suggestions' => array('Set up Google API key for personalized feedback')
         );
     }
 }

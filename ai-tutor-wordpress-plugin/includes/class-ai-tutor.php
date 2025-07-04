@@ -171,23 +171,19 @@ class AI_Tutor {
     }
     
     public function enqueue_scripts() {
-        // Core AI Tutor functionality - using only the working navigation system
-        wp_enqueue_script('ai-tutor-realtime', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-realtime.js', array('jquery'), AI_TUTOR_VERSION, true);
-        wp_enqueue_script('ai-tutor-navigation', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-navigation.js', array('jquery', 'ai-tutor-realtime'), AI_TUTOR_VERSION, true);
+        wp_enqueue_script('jquery');
         
-        // Localize scripts with AJAX data
-        $localize_data = array(
+        // Enqueue single main script file
+        wp_enqueue_script('ai-tutor-main', AI_TUTOR_PLUGIN_URL . 'assets/js/ai-tutor-main.js', array('jquery'), AI_TUTOR_VERSION, true);
+        
+        // Localize script for AJAX
+        wp_localize_script('ai-tutor-main', 'aiTutorAjax', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_tutor_nonce'),
             'rest_url' => rest_url('ai-tutor/v1/'),
-            'rest_nonce' => wp_create_nonce('wp_rest'),
             'backend_url' => get_option('ai_tutor_backend_url', ''),
-            'api_key' => get_option('ai_tutor_api_key', ''),
-            'google_api_key' => get_option('ai_tutor_google_api_key', '')
-        );
-        
-        wp_localize_script('ai-tutor-realtime', 'aiTutorAjax', $localize_data);
-        wp_localize_script('ai-tutor-navigation', 'aiTutorAjax', $localize_data);
+            'has_google_api' => !empty(get_option('ai_tutor_google_api_key', ''))
+        ));
     }
     
     public function enqueue_styles() {
